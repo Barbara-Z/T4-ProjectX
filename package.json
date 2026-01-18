@@ -1,6 +1,30 @@
 {
   "dependencies": {
     "axios": "^1.13.2",
-    "dotenv": "^17.2.3"
-  }
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-session": "^1.18.2",
+    "sqlite3": "^5.1.7"
+  },
+  "name": "t4-projectx",
+  "version": "1.0.0",
+  "description": "hallöchen people\r whaaaatttttsss upppppp\r hiiii\r Guten Morgen!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Barbara-Z/T4-ProjectX.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Barbara-Z/T4-ProjectX/issues"
+  },
+  "homepage": "https://github.com/Barbara-Z/T4-ProjectX#readme"
 }
