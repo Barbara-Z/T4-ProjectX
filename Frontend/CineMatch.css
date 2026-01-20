@@ -1,3 +1,75 @@
+#header {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #1e1e1e;
+    color: white;
+    max-width: 2200px;
+    margin: 0 auto;
+}
+
+.CineMatchLogo {
+    width: 90px;
+
+}
+
+.title {
+    margin-left: 1rem;
+    font-size: 40px;
+    font-family: 'impact', sans-serif;
+}
+
+.header-right {
+    margin-left: auto;
+    display: flex;
+    gap: 15px;
+}
+
+.search-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.search-input {
+    width: 450px;
+    padding: 8px;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+
+
+
+.quiz-btn {
+    background-color: #e00b17;
+    font-family: Poppins, sans-serif;
+    color: white;
+    font-weight: bold;
+    padding: 10px 50px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 12.5px;
+    border: none;
+}
+
+.quiz-btn:hover {
+    background-color: #b70a12;
+    transform: scale(1.07);
+}
+
+.home-link {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 13px;
+    margin-top: 13px;
+}
+
+.home-link:hover {
+    text-decoration: underline;
+}
+
 #body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -5,9 +77,18 @@
     background-color: #383838;
 }
 
-#header {
-    background-color: #272727;
+#footer {
+    background-color: #1e1e1e;
     color: white;
     padding: 10px;
-    text-align: center;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    text-align: end;
+}
+
+.tmdbLogo {
+    width: 60px;
+    height: auto;
+    margin-right: 20px;
 }
