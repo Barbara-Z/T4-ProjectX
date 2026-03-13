@@ -1,5 +1,5 @@
 // User-Session laden (Login-Status abrufen)
-fetch("/session")
+fetch("http://localhost:3001/session")
   .then(res => res.json())
   .then(user => {
     const area = document.getElementById("userArea");
@@ -24,8 +24,8 @@ fetch("/session")
 async function loadTrendingMovies() {
   console.log("loadTrendingMovies() gestartet");
   try {
-    // API-Request zu Backend (http://localhost:3000)
-    const apiUrl = "http://localhost:3000/api/trending-movies";
+    // API-Request zu Backend (http://localhost:3001)
+    const apiUrl = "http://localhost:3001/api/trending-movies";
     console.log("Fetching:", apiUrl);
     const response = await fetch(apiUrl);
     console.log("Response Status:", response.status, response.ok);
