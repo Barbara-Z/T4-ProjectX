@@ -149,19 +149,11 @@ app.post("/register", async (req, res) => {
               }
               return res.status(500).json({ error: "Registrierung fehlgeschlagen" });
             }
-
-            req.session.user = {
-              id: this.lastID,
-              firstName,
-              lastName,
-              email
-            };
             
             res.status(201).json({ 
               success: true, 
               message: "Registrierung erfolgreich",
-              user: req.session.user,
-              redirectTo: "http://localhost:3001/CineMatch.html"
+              redirectTo: "http://localhost:3001/Login.html"
             });
           }
         );
