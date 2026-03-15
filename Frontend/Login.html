@@ -2,17 +2,261 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - CineMatch</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Poppins', sans-serif;
+      color: #fff;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 400px;
+      background: rgba(30, 30, 30, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(187, 13, 19, 0.2);
+      border: 1px solid rgba(187, 13, 19, 0.3);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .login-header h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+      color: #bb0d13;
+    }
+
+    .login-header p {
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #ddd;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid rgba(187, 13, 19, 0.3);
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      outline: none;
+      border-color: #bb0d13;
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 10px rgba(187, 13, 19, 0.2);
+    }
+
+    .form-group input::placeholder {
+      color: #888;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #bb0d13, #ff4444);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(187, 13, 19, 0.4);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .error-message {
+      color: #ff6b6b;
+      font-size: 13px;
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(255, 107, 107, 0.1);
+      border-radius: 5px;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .register-link {
+      text-align: center;
+      margin-top: 20px;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .register-link a {
+      color: #bb0d13;
+      text-decoration: none;
+      font-weight: bold;
+      transition: color 0.3s ease;
+    }
+
+    .register-link a:hover {
+      color: #ff4444;
+    }
+
+    .back-link {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: #bb0d13;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.3s ease;
+    }
+
+    .back-link:hover {
+      color: #ff4444;
+    }
+
+    .submit-loading {
+      opacity: 0.7;
+      cursor: wait;
+    }
+  </style>
 </head>
 <body>
+  <a href="http://localhost:3001/CineMatch.html" class="back-link">← Zurück</a>
 
-<h2>Login</h2>
+  <div class="login-container">
+    <div class="login-header">
+      <h1>Login</h1>
+      <p>Melden Sie sich bei CineMatch an</p>
+    </div>
 
-<form action="/login" method="POST">
-  <input name="username" placeholder="Username" required>
-  <input name="password" type="password" placeholder="Passwort" required>
-  <button type="submit">Login</button>
-</form>
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">E-Mail-Adresse</label>
+        <input type="email" id="email" name="email" placeholder="Ihre E-Mail" required>
+      </div>
 
+      <div class="form-group">
+        <label for="password">Passwort</label>
+        <input type="password" id="password" name="password" placeholder="Ihr Passwort" required>
+      </div>
+
+      <div id="errorMessage" class="error-message"></div>
+
+      <button type="submit" class="login-btn">Anmelden</button>
+    </form>
+
+    <div class="register-link">
+      Sie haben noch kein Konto? <a href="http://localhost:3001/Register.html">Jetzt registrieren</a>
+    </div>
+  </div>
+
+  <script>
+    const WEB_BASE = 'http://localhost:3001';
+    const API_BASE = 'http://localhost:3001';
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
+      const errorDiv = document.getElementById('errorMessage');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      // Fehler verstecken
+      errorDiv.classList.remove('show');
+      submitBtn.classList.add('submit-loading');
+      submitBtn.textContent = 'Wird angemeldet...';
+
+      try {
+        const response = await fetch(`${API_BASE}/login`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+        
+        // Zuerst als Text lesen (nur einmal möglich!)
+        const responseText = await response.text();
+        
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          errorDiv.textContent = '❌ Server Fehler: Ungültige Antwort vom Server';
+          errorDiv.classList.add('show');
+          submitBtn.classList.remove('submit-loading');
+          submitBtn.textContent = 'Anmelden';
+          return;
+        }
+
+        if (response.ok) {
+          // Erfolgreicher Login
+          const target = data.redirectTo || '/CineMatch.html';
+          window.location.href = target.startsWith('http') ? target : `${WEB_BASE}${target}`;
+        } else {
+          // Fehler beim Login
+          errorDiv.textContent = data.error || 'Login fehlgeschlagen';
+          errorDiv.classList.add('show');
+          submitBtn.classList.remove('submit-loading');
+          submitBtn.textContent = 'Anmelden';
+        }
+      } catch (error) {
+        console.error('Fehler:', error);
+        console.error('Fehlertyp:', error.name);
+        console.error('Fehlermeldung:', error.message);
+        
+        // Detailliertere Fehlermeldung anzeigen
+        if (error.message.includes('Failed to fetch')) {
+          errorDiv.textContent = '❌ Server nicht erreichbar - Stelle sicher, dass der Backend-Server auf Port 3001 läuft';
+        } else {
+          errorDiv.textContent = '❌ Ein Fehler ist aufgetreten: ' + error.message;
+        }
+        errorDiv.classList.add('show');
+        submitBtn.classList.remove('submit-loading');
+        submitBtn.textContent = 'Anmelden';
+      }
+    });
+  </script>
 </body>
 </html>

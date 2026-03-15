@@ -2,19 +2,375 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Registrieren</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrieren - CineMatch</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Poppins', sans-serif;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .register-container {
+      width: 100%;
+      max-width: 500px;
+      background: rgba(30, 30, 30, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(187, 13, 19, 0.2);
+      border: 1px solid rgba(187, 13, 19, 0.3);
+    }
+
+    .register-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .register-header h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+      color: #bb0d13;
+    }
+
+    .register-header p {
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .form-row.full {
+      grid-template-columns: 1fr;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #ddd;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="date"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid rgba(187, 13, 19, 0.3);
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus,
+    input[type="date"]:focus {
+      outline: none;
+      border-color: #bb0d13;
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 10px rgba(187, 13, 19, 0.2);
+    }
+
+    input::placeholder {
+      color: #888;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+      filter: invert(1);
+    }
+
+    .password-info {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 5px;
+    }
+
+    .register-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #bb0d13, #ff4444);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 20px;
+    }
+
+    .register-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(187, 13, 19, 0.4);
+    }
+
+    .register-btn:active {
+      transform: translateY(0);
+    }
+
+    .error-message {
+      color: #ff6b6b;
+      font-size: 13px;
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(255, 107, 107, 0.1);
+      border-radius: 5px;
+      display: none;
+      margin-bottom: 20px;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .success-message {
+      color: #4caf50;
+      font-size: 13px;
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(76, 175, 80, 0.1);
+      border-radius: 5px;
+      display: none;
+      margin-bottom: 20px;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 20px;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .login-link a {
+      color: #bb0d13;
+      text-decoration: none;
+      font-weight: bold;
+      transition: color 0.3s ease;
+    }
+
+    .login-link a:hover {
+      color: #ff4444;
+    }
+
+    .back-link {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: #bb0d13;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.3s ease;
+    }
+
+    .back-link:hover {
+      color: #ff4444;
+    }
+
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .register-container {
+        padding: 20px;
+      }
+    }
+
+    .submit-loading {
+      opacity: 0.7;
+      cursor: wait;
+    }
+  </style>
 </head>
 <body>
+  <a href="http://localhost:3001/CineMatch.html" class="back-link">← Zurück</a>
 
-<h2>Registrieren</h2>
+  <div class="register-container">
+    <div class="register-header">
+      <h1>Registrieren</h1>
+      <p>Erstellen Sie ein neues CineMatch Konto</p>
+    </div>
 
-<form action="/register" method="POST">
-  <input name="username" placeholder="Username" required>
-  <input name="email" type="email" placeholder="Email" required>
-  <input name="password" type="password" placeholder="Passwort" required>
-  <input name="age" type="number" placeholder="Alter" required>
-  <button type="submit">Konto erstellen</button>
-</form>
+    <form id="registerForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="firstName">Vorname</label>
+          <input type="text" id="firstName" name="firstName" placeholder="Ihr Vorname" required>
+        </div>
+        <div class="form-group">
+          <label for="lastName">Familienname</label>
+          <input type="text" id="lastName" name="lastName" placeholder="Ihr Familienname" required>
+        </div>
+      </div>
 
+      <div class="form-group form-row full">
+        <label for="email">E-Mail-Adresse</label>
+        <input type="email" id="email" name="email" placeholder="Ihre E-Mail-Adresse" required>
+      </div>
+
+      <div class="form-group form-row full">
+        <label for="birthDate">Geburtsdatum</label>
+        <input type="date" id="birthDate" name="birthDate" required>
+      </div>
+
+      <div class="form-group form-row full">
+        <label for="password">Passwort</label>
+        <input type="password" id="password" name="password" placeholder="Passwort (mind. 6 Zeichen)" required>
+        <div class="password-info">Mindestens 6 Zeichen erforderlich</div>
+      </div>
+
+      <div class="form-group form-row full">
+        <label for="passwordConfirm">Passwort Bestätigung</label>
+        <input type="password" id="passwordConfirm" name="passwordConfirm" placeholder="Passwort wiederholen" required>
+      </div>
+
+      <div id="errorMessage" class="error-message"></div>
+      <div id="successMessage" class="success-message"></div>
+
+      <button type="submit" class="register-btn">Konto erstellen</button>
+    </form>
+
+    <div class="login-link">
+      Sie haben bereits ein Konto? <a href="http://localhost:3001/Login.html">Jetzt anmelden</a>
+    </div>
+  </div>
+
+  <script>
+    const WEB_BASE = 'http://localhost:3001';
+    const API_BASE = 'http://localhost:3001';
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      const birthDate = document.getElementById('birthDate').value;
+      const password = document.getElementById('password').value;
+      const passwordConfirm = document.getElementById('passwordConfirm').value;
+      const errorDiv = document.getElementById('errorMessage');
+      const successDiv = document.getElementById('successMessage');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      // Fehler und Erfolg verstecken
+      errorDiv.classList.remove('show');
+      successDiv.classList.remove('show');
+      submitBtn.classList.add('submit-loading');
+      submitBtn.textContent = 'Wird registriert...';
+
+      // Client-seitige Validierung
+      if (password !== passwordConfirm) {
+        errorDiv.textContent = 'Passwörter stimmen nicht überein';
+        errorDiv.classList.add('show');
+        submitBtn.classList.remove('submit-loading');
+        submitBtn.textContent = 'Konto erstellen';
+        return;
+      }
+
+      if (password.length < 6) {
+        errorDiv.textContent = 'Passwort muss mindestens 6 Zeichen lang sein';
+        errorDiv.classList.add('show');
+        submitBtn.classList.remove('submit-loading');
+        submitBtn.textContent = 'Konto erstellen';
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/register`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            firstName,
+            lastName,
+            email,
+            birthDate,
+            password,
+            passwordConfirm
+          })
+        });
+        
+        // Zuerst als Text lesen (nur einmal möglich!)
+        const responseText = await response.text();
+        
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          errorDiv.textContent = '❌ Server Fehler: Ungültige Antwort vom Server';
+          errorDiv.classList.add('show');
+          submitBtn.classList.remove('submit-loading');
+          submitBtn.textContent = 'Konto erstellen';
+          return;
+        }
+
+        if (response.ok) {
+          // Erfolgreiche Registrierung
+          successDiv.textContent = '✓ Registrierung erfolgreich! Sie werden zum Login weitergeleitet...';
+          successDiv.classList.add('show');
+          submitBtn.classList.remove('submit-loading');
+          submitBtn.textContent = 'Konto erstellt - Weiterleitung...';
+          
+          // Nach 2 Sekunden zum Login weiterleiten
+          setTimeout(() => {
+            const target = data.redirectTo || '/Login.html';
+            window.location.href = target.startsWith('http') ? target : `${WEB_BASE}${target}`;
+          }, 2000);
+        } else {
+          // Fehler bei der Registrierung
+          errorDiv.textContent = data.error || 'Registrierung fehlgeschlagen';
+          errorDiv.classList.add('show');
+          submitBtn.classList.remove('submit-loading');
+          submitBtn.textContent = 'Konto erstellen';
+        }
+      } catch (error) {
+        console.error('Fehler:', error);
+        console.error('Fehlertyp:', error.name);
+        console.error('Fehlermeldung:', error.message);
+        
+        // Detailliertere Fehlermeldung anzeigen
+        if (error.message.includes('Failed to fetch')) {
+          errorDiv.textContent = '❌ Server nicht erreichbar - Stelle sicher, dass der Backend-Server auf Port 3001 läuft';
+        } else {
+          errorDiv.textContent = '❌ Ein Fehler ist aufgetreten: ' + error.message;
+        }
+        errorDiv.classList.add('show');
+        submitBtn.classList.remove('submit-loading');
+        submitBtn.textContent = 'Konto erstellen';
+      }
+    });
+  </script>
 </body>
 </html>
