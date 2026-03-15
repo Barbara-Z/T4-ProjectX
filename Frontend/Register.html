@@ -338,14 +338,14 @@
 
         if (response.ok) {
           // Erfolgreiche Registrierung
-          successDiv.textContent = '✓ Registrierung erfolgreich! Sie werden zum Login weitergeleitet...';
+          successDiv.textContent = '✓ Registrierung erfolgreich! Sie werden eingeloggt und weitergeleitet...';
           successDiv.classList.add('show');
           submitBtn.classList.remove('submit-loading');
           submitBtn.textContent = 'Konto erstellt - Weiterleitung...';
           
-          // Nach 2 Sekunden zum Login weiterleiten
+          // Nach 2 Sekunden zur Startseite weiterleiten
           setTimeout(() => {
-            const target = data.redirectTo || '/Login.html';
+            const target = data.redirectTo || '/CineMatch.html';
             window.location.href = target.startsWith('http') ? target : `${WEB_BASE}${target}`;
           }, 2000);
         } else {
