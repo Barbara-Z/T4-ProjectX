@@ -1,7 +1,7 @@
 //berechnet die Punktzahl eines Quiz basierend auf den Antworten des Benutzers und den richtigen Antworten
 //alles was gerechnet wird in diesem File
 
-////berechnet die Punktzahl eines Quiz basierend auf den Antworten des Benutzers 
+//berechnet die Punktzahl eines Quiz basierend auf den Antworten des Benutzers 
 function evaluateQuiz(answers) {
   const scores = {};
 
