@@ -96,7 +96,11 @@ async function handleLogout(event) {
 
 // Quiz Button Funktion - Redirect zur Quiz Seite oder Login falls nicht angemeldet
 function redirectToQuiz() {
-  return;
+  if (!currentUser) {
+    window.location.href = "Login.html";
+  } else {
+    window.location.href = "Quiz.html";
+  }
 }
 
 // ==== Film-Details der Filme auf der Homepage anzeigen ====
