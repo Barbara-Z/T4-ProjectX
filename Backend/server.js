@@ -277,3 +277,39 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server läuft auf Port ${PORT}`);
 });
+
+// ***** *Quiz-Auswertung* *****
+const { evaluateQuiz, getTopGenres } = require("./utils/quizEvaluator");
+const { getMoviesByGenres } = require("./extern/tmdbService");
+
+app.post("/api/quiz-result", async (req, res) => {
+  try {
+    const answers = req.body.answers;
+
+    if (!answers || !Array.isArray(answers)) {
+      return res.status(400).json({ error: "Ungültige Antworten" });
+    }
+
+    //1. Punkte berechnen
+    const scores = evaluateQuiz(answers);
+
+    //2. Top Genres ermitteln
+    const topGenres = getTopGenres(scores);
+    console.log("Top Genres:", topGenres);
+
+    //3. Filme zu den Top Genres abrufen
+    const movies = await getMoviesByGenres(topGenres);
+
+    res.json({ 
+      success: true, 
+      scores,
+      message: "Quiz ausgewertet",
+      topGenres,
+      movies: movies.results
+    });
+
+  } catch (error) {
+    console.error("Quiz-Auswertungsfehler:", error);
+    res.status(500).json({ error: "Fehler bei der Quiz-Auswertung" });
+  }
+});
