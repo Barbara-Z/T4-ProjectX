@@ -33,7 +33,7 @@ console.log(
   process.env.TMDB_API_KEY?.startsWith("eyJ")
 );
 
-const { getPopularMovies, getTrendingMovies } = require("./extern/tmdbService");
+const { getPopularMovies, getTrendingMovies, getMovieDetails } = require("./extern/tmdbService");
 
 // SQLite Datenbank Initialisierung
 const db = new sqlite3.Database(path.join(__dirname, "users.db"), (err) => {
@@ -99,6 +99,30 @@ app.get("/api/trending-movies", async (req, res) => {
     });
   }
 });
+
+// API-Endpoint: Film-Details abrufen (mit Deutsch, Director, Writer, Runtime, Genre)
+// GET http://localhost:3001/api/movie-details/:movieId
+app.get("/api/movie-details/:movieId", async (req, res) => {
+  console.log("API Endpoint /api/movie-details/:movieId wurde aufgerufen für ID:", req.params.movieId);
+  try {
+    const movieId = req.params.movieId;
+    
+    // Film-Details über tmdbService abrufen
+    const details = await getMovieDetails(movieId);
+    console.log("Film-Details erfolgreich geladen:", details.title);
+    
+    // Filmdaten als JSON an Frontend zurückschicken
+    res.json(details);
+  } catch (err) {
+    console.error("Error fetching movie details:", err);
+    res.status(500).json({ 
+      error: "Failed to fetch movie details",
+      message: err.message,
+      details: err.toString()
+    });
+  }
+});
+// Ende Film-Details Endpoint
 
 // REGISTRIERUNGS-ENDPOINT
 app.post("/register", async (req, res) => {

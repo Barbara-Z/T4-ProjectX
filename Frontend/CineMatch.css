@@ -334,3 +334,195 @@
     height: auto;
     margin-right: 20px;
 }
+
+/* Film-Details Modal Styles */
+.movie-modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    animation: fadeIn 0.3s ease;
+}
+
+.movie-modal.show {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    background-color: #2a2a2a;
+    border-radius: 12px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 36px;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+    z-index: 2001;
+    transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+    color: #bb0d13;
+}
+
+.modal-body {
+    display: flex;
+    gap: 30px;
+    padding: 30px;
+}
+
+.modal-poster {
+    flex-shrink: 0;
+}
+
+.modal-poster img {
+    width: 250px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+.modal-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.modal-info h2 {
+    margin: 0;
+    font-size: 28px;
+    color: white;
+}
+
+.modal-rating {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rating-stars {
+    font-size: 20px;
+}
+
+#modalRating {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffb800;
+}
+
+.modal-details { 
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.detail-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.detail-item strong {
+    color: #bb0d13;
+    min-width: 10px; /*damit die Details direkt deben der Bezeichnung stehen */
+}
+
+/* ODER:
+.detail-item strong {
+    color: #bb0d13;
+    min-width: 190px; /* damit die Details untereinander stehen
+}
+würde ich aber text-align: justify für die Beschreibung
+*/
+
+.detail-item span {
+    color: #e0e0e0;
+    flex: 1;
+}
+
+.modal-overview {
+    padding-top: 15px;
+}
+
+.modal-overview h3 {
+    margin: 0 0 10px 0;
+    color: #bb0d13;
+    font-size: 18px;
+}
+
+.modal-overview p {
+    margin: 0;
+    color: #d0d0d0;
+    line-height: 1.6;
+    text-align: left; /* oder justify?*/
+}
+
+/* Responsive Design für Mobilgeräte */
+@media (max-width: 600px) {
+    .modal-body {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .modal-poster img {
+        width: 150px;
+    }
+
+    .modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .modal-info h2 {
+        font-size: 22px;
+    }
+
+    .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
