@@ -271,6 +271,12 @@ app.get("/logout", (req, res) => {
   });
 });
 
+// API-Endpoint für Quiz-Fragen
+app.get("/api/questions", (req, res) => {
+  const questionsPath = path.join(__dirname, "intern", "fragen.json");
+  res.sendFile(questionsPath);
+});
+
 // ===== STATISCHE DATEIEN UND FALLBACK (IMMER AM ENDE) =====
 
 // Statische Dateien (HTML, CSS, JS) vom Frontend-Ordner servieren
