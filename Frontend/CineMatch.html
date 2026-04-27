@@ -32,6 +32,55 @@
     <div id="footer">
         <img src="tmdbLogo.svg" alt="tmdbLogo" class="tmdbLogo">
     </div>
+
+    <!-- Film-Details Modal -->
+    <div id="movieModal" class="movie-modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <div class="modal-body">
+                <div class="modal-poster">
+                    <img id="modalPoster" src="" alt="Poster">
+                </div>
+                <div class="modal-info">
+                    <h2 id="modalTitle"></h2>
+                    <div class="modal-rating">
+                        <span class="rating-stars">⭐ <span id="modalRating"></span></span>
+                    </div>
+                    <div class="modal-details">
+                        <div class="detail-item">
+                            <strong>Veröffentlichungsdatum:</strong>
+                            <span id="modalReleaseDate"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Filmlänge:</strong>
+                            <span id="modalRuntime"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Genre:</strong>
+                            <span id="modalGenres"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Regisseur:</strong>
+                            <span id="modalDirector"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Drehbuchautor:</strong>
+                            <span id="modalWriter"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Bewertungen:</strong>
+                            <span id="modalVoteCount"></span>
+                        </div>
+                    </div>
+                    <div class="modal-overview">
+                        <h3>Beschreibung</h3>
+                        <p id="modalOverview"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 

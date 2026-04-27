@@ -33,7 +33,7 @@ console.log(
   process.env.TMDB_API_KEY?.startsWith("eyJ")
 );
 
-const { getPopularMovies, getTrendingMovies } = require("./extern/tmdbService");
+const { getPopularMovies, getTrendingMovies, getMovieDetails } = require("./extern/tmdbService");
 
 // SQLite Datenbank Initialisierung
 const db = new sqlite3.Database(path.join(__dirname, "users.db"), (err) => {
@@ -99,6 +99,30 @@ app.get("/api/trending-movies", async (req, res) => {
     });
   }
 });
+
+// API-Endpoint: Film-Details abrufen (mit Deutsch, Director, Writer, Runtime, Genre)
+// GET http://localhost:3001/api/movie-details/:movieId
+app.get("/api/movie-details/:movieId", async (req, res) => {
+  console.log("API Endpoint /api/movie-details/:movieId wurde aufgerufen für ID:", req.params.movieId);
+  try {
+    const movieId = req.params.movieId;
+    
+    // Film-Details über tmdbService abrufen
+    const details = await getMovieDetails(movieId);
+    console.log("Film-Details erfolgreich geladen:", details.title);
+    
+    // Filmdaten als JSON an Frontend zurückschicken
+    res.json(details);
+  } catch (err) {
+    console.error("Error fetching movie details:", err);
+    res.status(500).json({ 
+      error: "Failed to fetch movie details",
+      message: err.message,
+      details: err.toString()
+    });
+  }
+});
+// Ende Film-Details Endpoint
 
 // REGISTRIERUNGS-ENDPOINT
 app.post("/register", async (req, res) => {
@@ -247,6 +271,12 @@ app.get("/logout", (req, res) => {
   });
 });
 
+// API-Endpoint für Quiz-Fragen
+app.get("/api/questions", (req, res) => {
+  const questionsPath = path.join(__dirname, "intern", "fragen.json");
+  res.sendFile(questionsPath);
+});
+
 // ===== STATISCHE DATEIEN UND FALLBACK (IMMER AM ENDE) =====
 
 // Statische Dateien (HTML, CSS, JS) vom Frontend-Ordner servieren
@@ -276,4 +306,40 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server läuft auf Port ${PORT}`);
+});
+
+// ***** *Quiz-Auswertung* *****
+const { evaluateQuiz, getTopGenres } = require("./utils/quizEvaluator");
+const { getMoviesByGenres } = require("./extern/tmdbService");
+
+app.post("/api/quiz-result", async (req, res) => {
+  try {
+    const answers = req.body.answers;
+
+    if (!answers || !Array.isArray(answers)) {
+      return res.status(400).json({ error: "Ungültige Antworten" });
+    }
+
+    //1. Punkte berechnen
+    const scores = evaluateQuiz(answers);
+
+    //2. Top Genres ermitteln
+    const topGenres = getTopGenres(scores);
+    console.log("Top Genres:", topGenres);
+
+    //3. Filme zu den Top Genres abrufen
+    const movies = await getMoviesByGenres(topGenres);
+
+    res.json({ 
+      success: true, 
+      scores,
+      message: "Quiz ausgewertet",
+      topGenres,
+      movies: movies.results
+    });
+
+  } catch (error) {
+    console.error("Quiz-Auswertungsfehler:", error);
+    res.status(500).json({ error: "Fehler bei der Quiz-Auswertung" });
+  }
 });

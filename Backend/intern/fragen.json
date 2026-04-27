@@ -1,0 +1,193 @@
+[
+  {
+    "frage": "Welche Art von Erlebnis suchst du?",
+    "antworten": [
+      { "text": "Actionreiche Spannung", "punkte": { "action": 2, "thriller": 1 } },
+      { "text": "Lustige Unterhaltung", "punkte": { "comedy": 2, "family": 1 } },
+      { "text": "Emotionale Geschichte", "punkte": { "drama": 2, "romance": 1 } },
+      { "text": "Fantastische Welten", "punkte": { "fantasy": 2, "science_fiction": 1 } }
+    ]
+  },
+  {
+    "frage": "Welches Thema interessiert dich am meisten?",
+    "antworten": [
+      { "text": "Verbrechen und Ermittlungen", "punkte": { "crime": 2, "mystery": 1, "thriller": 1 } },
+      { "text": "Historische Ereignisse", "punkte": { "history": 2, "war": 1 } },
+      { "text": "Musik und Kunst", "punkte": { "music": 3 } },
+      { "text": "Natur / echte Geschichten", "punkte": { "documentary": 2 } }
+    ]
+  },
+  {
+    "frage": "Welche Atmosphäre bevorzugst du?",
+    "antworten": [
+      { "text": "spannend und nervenaufreibend", "punkte": { "thriller": 2, "horror": 1 } },
+      { "text": "leicht und positiv", "punkte": { "comedy": 2 } },
+      { "text": "ernst und emotional", "punkte": { "drama": 2 } },
+      { "text": "episch und groß", "punkte": { "adventure": 2, "fantasy": 1 } }
+    ]
+  },
+  {
+    "frage": "Welche Art von Geschichte möchtest du sehen?",
+    "antworten": [
+      { "text": "Heldenreise / Abenteuer", "punkte": { "adventure": 2, "action": 1 } },
+      { "text": "Liebesgeschichte", "punkte": { "romance": 2 } },
+      { "text": "Rätsel / Geheimnisse", "punkte": { "mystery": 2 } },
+      { "text": "Zukunft / Technologie", "punkte": { "science_fiction": 2 } }
+    ]
+  },
+  {
+    "frage": "Wie intensiv darf der Film sein?",
+    "antworten": [
+      { "text": "sehr intensiv / beängstigend", "punkte": { "horror": 2, "thriller": 1 } },
+      { "text": "mittelmäßig spannend", "punkte": { "action": 1, "crime": 1 } },
+      { "text": "entspannt", "punkte": { "comedy": 2, "family": 1 } }
+    ]
+  },
+  {
+    "frage": "Welches Setting interessiert dich?",
+    "antworten": [
+      { "text": "Vergangenheit", "punkte": { "history": 2, "war": 1 } },
+      { "text": "Gegenwart", "punkte": { "drama": 1, "crime": 1 } },
+      { "text": "Zukunft / andere Welten", "punkte": { "science_fiction": 2, "fantasy": 1 } },
+      { "text": "Wilder Westen", "punkte": { "western": 2 } }
+    ]
+  },
+  {
+    "frage": "Was soll im Mittelpunkt stehen?",
+    "antworten": [
+      { "text": "Action & Kämpfe", "punkte": { "action": 2, "war": 1 } },
+      { "text": "Beziehungen", "punkte": { "romance": 2, "drama": 1 } },
+      { "text": "Ermittlungen", "punkte": { "crime": 2, "mystery": 1 } },
+      { "text": "Entdeckung & Reise", "punkte": { "adventure": 2 } }
+    ]
+  },
+  {
+    "frage": "Welchen Stil bevorzugst du?",
+    "antworten": [
+      { "text": "realistisch", "punkte": { "drama": 2, "documentary": 1 } },
+      { "text": "kreativ / fantasievoll", "punkte": { "fantasy": 2 } },
+      { "text": "technisch / futuristisch", "punkte": { "science_fiction": 2 } },
+      { "text": "klassisch / traditionell", "punkte": { "western": 2, "history": 2 } }
+    ]
+  },
+  {
+    "frage": "Welche Emotion soll im Vordergrund stehen?",
+    "antworten": [
+      { "text": "Spannung", "punkte": { "thriller": 2 } },
+      { "text": "Angst", "punkte": { "horror": 2 } },
+      { "text": "Freude", "punkte": { "comedy": 2, "family": 2 } },
+      { "text": "Mitgefühl", "punkte": { "drama": 2, "romance": 1, "family": 1 } }
+    ]
+  },
+  {
+    "frage": "Was soll der Film zusätzlich bieten?",
+    "antworten": [
+      { "text": "Musik / Performance", "punkte": { "music": 3 } },
+      { "text": "reale Hintergründe", "punkte": { "documentary": 3 } },
+      { "text": "große Schlachten", "punkte": { "war": 2 } },
+      { "text": "nichts Spezielles", "punkte": { "drama": 1 } }
+    ]
+  },
+  {
+    "frage": "Wie sehr magst du Fantasy?",
+    "antworten": [
+      { "text": "Sehr", "punkte": { "fantasy": 3 } },
+      { "text": "Eher weniger", "punkte": { "fantasy": 2 } },
+      { "text": "Wenig", "punkte": { "fantasy": 0 } }
+    ]
+  },
+  {
+    "frage": "Wie stehst du zu gruseligen oder beängstigenden Filmen?",
+    "antworten": [
+      { "text": "mag ich sehr", "punkte": { "horror": 2 } },
+      { "text": "geht so", "punkte": { "horror": 1 } },
+      { "text": "gar nicht", "punkte": { "horror": 0 } }
+    ]
+  },
+  {
+    "frage": "Wie wichtig sind dir romantische Elemente?",
+    "antworten": [
+      { "text": "sehr wichtig", "punkte": { "romance": 2 } },
+      { "text": "teilweise", "punkte": { "romance": 1 } },
+      { "text": "unwichtig", "punkte": { "romance": 0 } }
+    ]
+  },
+  {
+    "frage": "Wie sehr legst du Wert auf Humor?",
+    "antworten": [
+      { "text": "sehr", "punkte": { "comedy": 2 } },
+      { "text": "etwas", "punkte": { "comedy": 1 } },
+      { "text": "kaum", "punkte": { "comedy": 0 } }
+    ]
+  },
+  {
+    "frage": "Wie sehr interessieren dich historische oder kriegsbezogene Themen?",
+    "antworten": [
+      { "text": "sehr", "punkte": { "history": 2, "war": 2 } },
+      { "text": "etwas", "punkte": { "history": 1, "war": 1 } },
+      { "text": "kaum", "punkte": { "history": 0, "war": 0 } }
+    ]
+  },
+  {
+    "frage": "Wie wichtig sind Musik oder Performance im Film?",
+    "antworten": [
+      { "text": "sehr", "punkte": { "music": 3 } },
+      { "text": "etwas", "punkte": { "music": 2 } },
+      { "text": "kaum", "punkte": { "music": 0 } }
+    ]
+  },
+
+  {
+    "frage": "Für wen ist der Film gedacht?",
+    "antworten": [
+      { "text": "nur für Erwachsene" },
+      { "text": "mit Familie / Kindern" },
+      { "text": "egal" }
+    ]
+  },
+  {
+    "frage": "In welchem Rahmen schaust du den Film?",
+    "antworten": [
+      { "text": "alleine" },
+      { "text": "mit Freunden" },
+      { "text": "mit Familie / Kindern" }
+    ]
+  },
+  {
+    "frage": "Auf welcher Plattform möchtest du den Film schauen?",
+    "antworten": [
+      { "text": "Netflix" },
+      { "text": "Amazon Prime" },
+      { "text": "Disney+" },
+      { "text": "egal" }
+    ]
+  },
+  {
+    "frage": "Welche Art von Film bevorzugst du?",
+    "antworten": [
+      { "text": "Animiert" },
+      { "text": "Anime" },
+      { "text": "Realfilm" },
+      { "text": "egal" }
+    ]
+  },
+  
+  {
+    "frage": "Welche Filmlänge passt dir am besten?",
+    "antworten": [
+      { "text": "unter 90 Minuten" },
+      { "text": "90–120 Minuten" },
+      { "text": "über 120 Minuten" },
+      { "text": "egal" }
+    ]
+  },
+  {
+    "frage": "Welche Streaming-Anbieter stehen dir zur Verfügung?",
+    "antworten": [
+      { "text": "Netflix" },
+      { "text": "Amazon Prime" },
+      { "text": "Disney+" },
+      { "text": "mehrere / egal" }
+    ]
+  }
+]

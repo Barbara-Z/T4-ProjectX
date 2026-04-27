@@ -96,8 +96,66 @@ async function handleLogout(event) {
 
 // Quiz Button Funktion - Redirect zur Quiz Seite oder Login falls nicht angemeldet
 function redirectToQuiz() {
-  return;
+  if (!currentUser) {
+    window.location.href = "Login.html";
+  } else {
+    window.location.href = "Quiz.html";
+  }
 }
+
+// ==== Film-Details der Filme auf der Homepage anzeigen ====
+// Modal Funktionen für Film-Details
+// Film-Details vom Backend laden und Modal anzeigen
+async function openMovieModal(movie) {
+  try {
+    console.log('Film-Modal geöffnet für:', movie.title || movie.name, 'ID:', movie.id);
+    
+    // Lade detaillierte Infos vom Backend (mit deutschem Text, Director, Writer, etc.)
+    const response = await fetch(`${API_BASE}/api/movie-details/${movie.id}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const details = await response.json();
+    console.log('Film-Details geladen:', details);
+    
+    // Film-Daten in Modal einfügen
+    document.getElementById('modalTitle').textContent = details.title;
+    document.getElementById('modalRating').textContent = details.vote_average.toFixed(1);
+    document.getElementById('modalReleaseDate').textContent = details.release_date_formatted || 'Unbekannt';
+    document.getElementById('modalRuntime').textContent = details.runtime_formatted || 'Unbekannt';
+    document.getElementById('modalGenres').textContent = details.genres || 'Unbekannt';
+    document.getElementById('modalDirector').textContent = details.director || 'Unbekannt';
+    document.getElementById('modalWriter').textContent = details.writers || 'Unbekannt';
+    document.getElementById('modalVoteCount').textContent = `${details.vote_count}`;
+    document.getElementById('modalOverview').textContent = details.overview || 'Keine Beschreibung verfügbar';
+    
+    // Poster-Bild setzen
+    const posterUrl = `https://image.tmdb.org/t/p/w500${details.poster_path}`;
+    document.getElementById('modalPoster').src = posterUrl;
+    document.getElementById('modalPoster').alt = details.title;
+    
+    // Modal anzeigen
+    const modal = document.getElementById('movieModal');
+    modal.classList.add('show');
+    
+    // Body scrollen verhindern wenn Modal offen ist
+    document.body.style.overflow = 'hidden';
+  } catch (error) {
+    console.error('Fehler beim Laden der Film-Details:', error);
+    alert('Fehler beim Laden der Film-Details: ' + error.message);
+  }
+}
+
+function closeMovieModal() {
+  const modal = document.getElementById('movieModal');
+  modal.classList.remove('show');
+  
+  // Body scrollen wieder erlauben
+  document.body.style.overflow = 'auto';
+}
+// ==== Ende Film-Details Funktionen ====
 
 // Session beim Laden der Seite abrufen
 loadUserSession();
@@ -170,9 +228,9 @@ function displayMovies(movies, containerId) {
       </div>
     `;
     
-    // Click-Event für Film-Details (optional)
+    // Click-Event für Film-Details - Modal öffnen
     movieCard.addEventListener('click', () => {
-      console.log('Film geklickt:', movie.title || movie.name);
+      openMovieModal(movie);
     });
     
     // Film-Karte zum Carousel hinzufügen
@@ -183,3 +241,26 @@ function displayMovies(movies, containerId) {
 
 // Beim Laden der Seite - Trend-Filme laden
 loadTrendingMovies();
+
+// Modal Close Button und Hintergrund Event-Listener
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('movieModal');
+  const closeButton = document.querySelector('.modal-close');
+  
+  // Close Button Listener
+  closeButton.addEventListener('click', closeMovieModal);
+  
+  // Modal Hintergrund Listener - Schließen wenn außerhalb geklickt wird
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeMovieModal();
+    }
+  });
+  
+  // Escape-Taste zum Schließen des Modals
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.classList.contains('show')) {
+      closeMovieModal();
+    }
+  });
+});
