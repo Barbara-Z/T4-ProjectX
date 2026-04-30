@@ -39,20 +39,22 @@
 }
 
 .quiz-btn {
-    background-color: rgb(187, 13, 19);
+    background: linear-gradient(135deg, #bb0d13, #ff4444);
     font-family: Poppins, sans-serif;
     color: white;
     font-weight: bold;
     padding: 10px 50px;
     font-size: 16px;
     cursor: pointer;
-    border-radius: 12.5px;
+    border-radius: 8px;
     border: none;
+    transition: all 0.3s ease;
 }
 
 .quiz-btn:hover {
-    background-color: rgb(132, 4, 8);
-    transform: scale(1.07);
+    background: linear-gradient(135deg, #ff4444, #bb0d13);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(187, 13, 19, 0.4);
 }
 
 .home-link {
@@ -358,6 +360,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -380,6 +383,7 @@
         transform: translateY(-50px);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -448,7 +452,7 @@
     color: #ffb800;
 }
 
-.modal-details { 
+.modal-details {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -465,7 +469,8 @@
 
 .detail-item strong {
     color: #bb0d13;
-    min-width: 10px; /*damit die Details direkt deben der Bezeichnung stehen */
+    min-width: 10px;
+    /*damit die Details direkt deben der Bezeichnung stehen */
 }
 
 /* ODER:
@@ -495,7 +500,8 @@ würde ich aber text-align: justify für die Beschreibung
     margin: 0;
     color: #d0d0d0;
     line-height: 1.6;
-    text-align: left; /* oder justify?*/
+    text-align: left;
+    /* oder justify?*/
 }
 
 /* Responsive Design für Mobilgeräte */
