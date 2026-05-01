@@ -139,55 +139,41 @@
 
   {
     "frage": "Für wen ist der Film gedacht?",
+    "filter": "audience",
     "antworten": [
-      { "text": "nur für Erwachsene" },
-      { "text": "mit Familie / Kindern" },
-      { "text": "egal" }
-    ]
-  },
-  {
-    "frage": "In welchem Rahmen schaust du den Film?",
-    "antworten": [
-      { "text": "alleine" },
-      { "text": "mit Freunden" },
-      { "text": "mit Familie / Kindern" }
+      { "text": "nur für Erwachsene", "value": "adult" },
+      { "text": "mit Familie / Kindern", "value": "family" },
+      { "text": "egal", "value": "any" }
     ]
   },
   {
     "frage": "Auf welcher Plattform möchtest du den Film schauen?",
+    "filter": "provider",
     "antworten": [
-      { "text": "Netflix" },
-      { "text": "Amazon Prime" },
-      { "text": "Disney+" },
-      { "text": "egal" }
+      { "text": "Netflix", "value": "netflix" },
+      { "text": "Amazon Prime", "value": "amazon" },
+      { "text": "Disney+", "value": "disney" },
+      { "text": "egal", "value": "any" }
     ]
   },
   {
     "frage": "Welche Art von Film bevorzugst du?",
+    "filter": "type",
     "antworten": [
-      { "text": "Animiert" },
-      { "text": "Anime" },
-      { "text": "Realfilm" },
-      { "text": "egal" }
+      { "text": "Animiert", "value": "animation" },
+      { "text": "Anime", "value": "anime" },
+      { "text": "Realfilm", "value": "live_action" },
+      { "text": "egal", "value": "any" }
     ]
   },
-  
   {
     "frage": "Welche Filmlänge passt dir am besten?",
+    "filter": "runtime",
     "antworten": [
-      { "text": "unter 90 Minuten" },
-      { "text": "90–120 Minuten" },
-      { "text": "über 120 Minuten" },
-      { "text": "egal" }
-    ]
-  },
-  {
-    "frage": "Welche Streaming-Anbieter stehen dir zur Verfügung?",
-    "antworten": [
-      { "text": "Netflix" },
-      { "text": "Amazon Prime" },
-      { "text": "Disney+" },
-      { "text": "mehrere / egal" }
+      { "text": "unter 90 Minuten", "value": "short" },
+      { "text": "90–120 Minuten", "value": "medium" },
+      { "text": "über 120 Minuten", "value": "long" },
+      { "text": "egal", "value": "any" }
     ]
   }
 ]

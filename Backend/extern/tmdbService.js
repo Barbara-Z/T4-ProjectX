@@ -27,33 +27,75 @@ async function getTrendingMovies() {
   return response.data; // Rückgabe der Filmdaten (Array mit Filmen)
 }
 
-// Filme nach Genres abrufen (z.B. Action, Comedy, etc.)
+// Genre-Map: Genre-Name (wie in quizData verwendet) -> TMDB-ID
+const genreMapTMDB = {
+  action: 28,
+  adventure: 12,
+  animation: 16,
+  comedy: 35,
+  crime: 80,
+  documentary: 99,
+  drama: 18,
+  family: 10751,
+  fantasy: 14,
+  history: 36,
+  horror: 27,
+  music: 10402,
+  mystery: 9648,
+  romance: 10749,
+  science_fiction: 878,
+  thriller: 53,
+  war: 10752,
+  western: 37
+};
+
+// Reverse-Map für Display-Zwecke (TMDB-ID -> Genre-Name)
+const genreNameById = Object.fromEntries(
+  Object.entries(genreMapTMDB).map(([name, id]) => [id, name])
+);
+
+// Filme nach Genres abrufen (Legacy-Variante, weiterhin von /api/quiz-result genutzt)
 async function getMoviesByGenres(genres) {
-    const genreMap = {
-        action: 28,
-        adventure: 12,
-        animation: 16,
-        comedy: 35,
-        crime: 80,
-        documentary: 99,
-        drama: 18,
-        family: 10751,
-        fantasy: 14,
-        history: 36,
-        horror: 27,
-        music: 10402,
-        mystery: 9648,
-        romance: 10749,
-        science_fiction: 878,
-        thriller: 53,
-        war: 10752,
-        western: 37
+  const genreIds = genres.map(g => genreMapTMDB[g]).filter(Boolean).join(",");
+  const response = await tmdb.get(`/discover/movie?with_genres=${genreIds}`);
+  return response.data;
+}
+
+// Generischer Discover-Aufruf mit beliebigen Query-Parametern (Filter-Engine baut sie).
+// Holt mehrere Seiten, damit das Ranking eine gute Auswahl hat.
+async function discoverMovies(params = {}, pages = 2) {
+  const all = [];
+  for (let page = 1; page <= pages; page++) {
+    const response = await tmdb.get("/discover/movie", { params: { ...params, page } });
+    if (response.data && Array.isArray(response.data.results)) {
+      all.push(...response.data.results);
+    }
+    if (!response.data || page >= (response.data.total_pages || 1)) break;
+  }
+  return all;
+}
+
+// Vor dem Ranking brauchen wir runtime + saubere genre_ids für jeden Film.
+// Discover liefert genre_ids und (manchmal) origin_country, aber keine runtime.
+async function enrichMovieForRanking(movie) {
+  if (typeof movie.runtime === "number") return movie;
+  try {
+    const detail = await tmdb.get(`/movie/${movie.id}`, { params: { language: "de-DE" } });
+    return {
+      ...movie,
+      runtime: detail.data.runtime,
+      genre_ids: movie.genre_ids?.length
+        ? movie.genre_ids
+        : (detail.data.genres || []).map(g => g.id),
+      origin_country: detail.data.origin_country || movie.origin_country || []
     };
+  } catch (err) {
+    return movie;
+  }
+}
 
-    const genreIds = genres.map(g => genreMap[g]).join(","); // Genre-Namen in IDs umwandeln und als String für API-Aufruf formatieren
-
-    const response = await tmdb.get(`/discover/movie?with_genres=${genreIds}`);
-    return response.data; // API-Aufruf zu TMDB mit Genre-Filter
+async function enrichMovies(movies) {
+  return Promise.all(movies.map(enrichMovieForRanking));
 }
 
 // Film-Details abrufen (mit deutscher Übersetzung, Credits, Runtime, etc.)
@@ -121,4 +163,13 @@ async function getMovieDetails(movieId) {
 }
 // Ende Modal Film-Details Funktion
 
-module.exports = { getPopularMovies, getTrendingMovies, getMoviesByGenres, getMovieDetails };
+module.exports = {
+  getPopularMovies,
+  getTrendingMovies,
+  getMoviesByGenres,
+  getMovieDetails,
+  discoverMovies,
+  enrichMovies,
+  genreMapTMDB,
+  genreNameById
+};

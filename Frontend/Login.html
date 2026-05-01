@@ -189,6 +189,19 @@
     const WEB_BASE = 'http://localhost:3001';
     const API_BASE = 'http://localhost:3001';
 
+    function getRedirectTarget() {
+      const params = new URLSearchParams(window.location.search);
+      const redirectParam = params.get('redirect');
+
+      if (!redirectParam) {
+        return null;
+      }
+
+      const normalized = redirectParam.startsWith('/') ? redirectParam : `/${redirectParam}`;
+      const allowed = new Set(['/Quiz.html', '/CineMatch.html']);
+      return allowed.has(normalized) ? normalized : null;
+    }
+
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -228,7 +241,8 @@
 
         if (response.ok) {
           // Erfolgreicher Login
-          const target = data.redirectTo || '/CineMatch.html';
+          const redirectTarget = getRedirectTarget();
+          const target = redirectTarget || data.redirectTo || '/CineMatch.html';
           window.location.href = target.startsWith('http') ? target : `${WEB_BASE}${target}`;
         } else {
           // Fehler beim Login

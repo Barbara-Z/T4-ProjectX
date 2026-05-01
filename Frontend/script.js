@@ -97,7 +97,8 @@ async function handleLogout(event) {
 // Quiz Button Funktion - Redirect zur Quiz Seite oder Login falls nicht angemeldet
 function redirectToQuiz() {
   if (!currentUser) {
-    window.location.href = "Login.html";
+    const redirect = encodeURIComponent("Quiz.html");
+    window.location.href = `Login.html?redirect=${redirect}`;
   } else {
     window.location.href = "Quiz.html";
   }

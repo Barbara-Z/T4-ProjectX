@@ -277,6 +277,76 @@ app.get("/api/questions", (req, res) => {
   res.sendFile(questionsPath);
 });
 
+// ***** *Quiz-Auswertung* *****
+const { buildUserScore, getTopGenre } = require("./utils/scoreCalculator");
+const {
+  buildUserPreferences,
+  buildDiscoverParams,
+  applyFilters
+} = require("./utils/filterEngine");
+const { rankMovies } = require("./utils/rankingEngine");
+const {
+  discoverMovies,
+  enrichMovies,
+  genreMapTMDB,
+  genreNameById
+} = require("./extern/tmdbService");
+
+// POST /api/quiz-result
+// Body: { answers: [...] } where each entry corresponds to a question (in order)
+// and is either a scoring answer ({ punkte: {...} }) or a filter answer
+// ({ filter: "provider", value: "netflix" }).
+app.post("/api/quiz-result", async (req, res) => {
+  try {
+    const answers = req.body.answers;
+    if (!answers || !Array.isArray(answers)) {
+      return res.status(400).json({ error: "Ungültige Antworten" });
+    }
+
+    const userScore = buildUserScore(answers);
+    const topGenreName = getTopGenre(userScore);
+    const topGenreId = topGenreName ? genreMapTMDB[topGenreName] : null;
+
+    if (!topGenreName) {
+      return res.status(400).json({ error: "Keine Genre-Punkte gefunden" });
+    }
+
+    const userPreferences = buildUserPreferences(answers);
+
+    const discoverParams = buildDiscoverParams(userPreferences, topGenreId);
+    let movies = await discoverMovies(discoverParams, 2);
+
+    movies = await enrichMovies(movies);
+    movies = applyFilters(movies, userPreferences, topGenreId);
+
+    const top3 = rankMovies(movies, userScore, topGenreId, 3);
+
+    const recommendations = top3.map(m => ({
+      id: m.id,
+      title: m.title,
+      overview: m.overview,
+      poster_path: m.poster_path,
+      backdrop_path: m.backdrop_path,
+      vote_average: m.vote_average,
+      release_date: m.release_date,
+      runtime: m.runtime,
+      score: Math.round(m.score * 100) / 100,
+      genres: (m.genre_ids || []).map(id => genreNameById[id]).filter(Boolean)
+    }));
+
+    res.json({
+      success: true,
+      userScore,
+      topGenre: topGenreName,
+      userPreferences,
+      recommendations
+    });
+  } catch (error) {
+    console.error("Quiz-Auswertungsfehler:", error);
+    res.status(500).json({ error: "Fehler bei der Quiz-Auswertung", message: error.message });
+  }
+});
+
 // ===== STATISCHE DATEIEN UND FALLBACK (IMMER AM ENDE) =====
 
 // Statische Dateien (HTML, CSS, JS) vom Frontend-Ordner servieren
@@ -306,40 +376,4 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server läuft auf Port ${PORT}`);
-});
-
-// ***** *Quiz-Auswertung* *****
-const { evaluateQuiz, getTopGenres } = require("./utils/quizEvaluator");
-const { getMoviesByGenres } = require("./extern/tmdbService");
-
-app.post("/api/quiz-result", async (req, res) => {
-  try {
-    const answers = req.body.answers;
-
-    if (!answers || !Array.isArray(answers)) {
-      return res.status(400).json({ error: "Ungültige Antworten" });
-    }
-
-    //1. Punkte berechnen
-    const scores = evaluateQuiz(answers);
-
-    //2. Top Genres ermitteln
-    const topGenres = getTopGenres(scores);
-    console.log("Top Genres:", topGenres);
-
-    //3. Filme zu den Top Genres abrufen
-    const movies = await getMoviesByGenres(topGenres);
-
-    res.json({ 
-      success: true, 
-      scores,
-      message: "Quiz ausgewertet",
-      topGenres,
-      movies: movies.results
-    });
-
-  } catch (error) {
-    console.error("Quiz-Auswertungsfehler:", error);
-    res.status(500).json({ error: "Fehler bei der Quiz-Auswertung" });
-  }
 });
