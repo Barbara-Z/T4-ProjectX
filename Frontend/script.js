@@ -32,10 +32,14 @@ function updateUserArea(user) {
     const lastInitial = (user.lastName || "").trim().charAt(0).toUpperCase();
     const initials = `${firstInitial}${lastInitial}` || "U";
 
+    const avatar = user.profile_picture
+      ? `<img class="user-initials-avatar user-avatar-img" src="${API_BASE}${user.profile_picture}" alt="Profilbild">`
+      : `<span class="user-initials-avatar">${initials}</span>`;
+
     // Benutzer angemeldet - User Icon mit Dropdown anzeigen
     area.innerHTML = `
       <div class="user-dropdown-trigger" id="userDropdownTrigger">
-        <span class="user-initials-avatar">${initials}</span>
+        ${avatar}
         <span class="dropdown-arrow" id="dropdownArrow">▼</span>
       </div>
       <div class="user-dropdown-menu" id="userDropdownMenu">
@@ -43,7 +47,7 @@ function updateUserArea(user) {
           <div class="user-name">${user.firstName} ${user.lastName}</div>
           <div class="user-email">${user.email}</div>
         </div>
-        <a href="#" class="dropdown-menu-item profile">
+        <a href="${WEB_BASE}/Profil.html" class="dropdown-menu-item profile">
           <span>👤</span>
           <span>Profil anzeigen</span>
         </a>

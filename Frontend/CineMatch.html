@@ -7,6 +7,7 @@
     <title>CineMatch</title>
     <link rel="stylesheet" href="CineMatch.css">
     <link rel="icon" type="image/ico" href="CineMatchLogo.png">
+    <script src="i18n.js" defer></script>
 </head>
 
 <body id="body">
@@ -14,16 +15,17 @@
         <img src="CineMatchLogo_Schatten.png" alt="CineMatchLogo" class="CineMatchLogo">
         <h1 class="title">CineMatch</h1>
         <div class="search-container">
-            <input type="text" placeholder="Filme suchen..." class="search-input">
+            <input type="text" data-i18n-placeholder="header.searchPlaceholder" placeholder="Filme suchen..." class="search-input">
         </div>
         <div class="header-right">
-            <button class="quiz-btn" onclick="redirectToQuiz()">Quiz starten</button>
+            <div class="lang-toggle" id="langToggle" role="group" aria-label="Language"></div>
+            <button class="quiz-btn" data-i18n="header.startQuiz" onclick="redirectToQuiz()">Quiz starten</button>
             <div id="userArea" class="user-area"></div>
         </div>
     </div>
     <div id="content">
         <div class="section">
-            <h2>Im Trend</h2>
+            <h2 data-i18n="section.trending">Im Trend</h2>
             <div class="movie-carousel" id="trendingCarousel">
                 <!-- Filme werden hier dynamisch eingefügt -->
             </div>
@@ -48,32 +50,32 @@
                     </div>
                     <div class="modal-details">
                         <div class="detail-item">
-                            <strong>Veröffentlichungsdatum:</strong>
+                            <strong data-i18n="modal.releaseDate">Veröffentlichungsdatum:</strong>
                             <span id="modalReleaseDate"></span>
                         </div>
                         <div class="detail-item">
-                            <strong>Filmlänge:</strong>
+                            <strong data-i18n="modal.runtime">Filmlänge:</strong>
                             <span id="modalRuntime"></span>
                         </div>
                         <div class="detail-item">
-                            <strong>Genre:</strong>
+                            <strong data-i18n="modal.genre">Genre:</strong>
                             <span id="modalGenres"></span>
                         </div>
                         <div class="detail-item">
-                            <strong>Regisseur:</strong>
+                            <strong data-i18n="modal.director">Regisseur:</strong>
                             <span id="modalDirector"></span>
                         </div>
                         <div class="detail-item">
-                            <strong>Drehbuchautor:</strong>
+                            <strong data-i18n="modal.writer">Drehbuchautor:</strong>
                             <span id="modalWriter"></span>
                         </div>
                         <div class="detail-item">
-                            <strong>Bewertungen:</strong>
+                            <strong data-i18n="modal.votes">Bewertungen:</strong>
                             <span id="modalVoteCount"></span>
                         </div>
                     </div>
                     <div class="modal-overview">
-                        <h3>Beschreibung</h3>
+                        <h3 data-i18n="modal.description">Beschreibung</h3>
                         <p id="modalOverview"></p>
                     </div>
                 </div>

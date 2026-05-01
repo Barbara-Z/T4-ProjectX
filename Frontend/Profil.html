@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="profile.pageTitle">Mein Profil | CineMatch</title>
+  <link rel="icon" type="image/png" href="CineMatchLogo.png">
+  <link rel="stylesheet" href="Profil.css">
+  <script src="i18n.js" defer></script>
+  <script src="profil.js" defer></script>
+</head>
+
+<body>
+  <header class="profile-header">
+    <a href="/CineMatch.html" class="brand">
+      <img src="CineMatchLogo.png" alt="CineMatch" class="brand-logo">
+      <span class="brand-name">CineMatch</span>
+    </a>
+    <div class="header-actions">
+      <div class="lang-toggle" id="langToggle" role="group" aria-label="Language"></div>
+      <a href="/CineMatch.html" class="back-link" data-i18n="profile.backHome">← Zurück zur Startseite</a>
+    </div>
+  </header>
+
+  <main class="profile-main">
+    <section class="profile-card profile-identity">
+      <button type="button" class="avatar-button" id="avatarButton" data-i18n-aria="profile.changeAvatar" aria-label="Profilbild ändern">
+        <img id="avatarImage" class="avatar-image" alt="" hidden>
+        <span id="avatarFallback" class="avatar-fallback">U</span>
+        <span class="avatar-overlay">
+          <svg class="avatar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 7h3l2-3h8l2 3h3v13H3z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+          <span data-i18n="profile.changeAvatar">Profilbild ändern</span>
+        </span>
+      </button>
+      <input type="file" id="avatarInput" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+
+      <div class="identity-text">
+        <span class="identity-eyebrow" data-i18n="profile.eyebrow">Mein Profil</span>
+        <h1 id="userName" class="user-name">–</h1>
+        <p id="userEmail" class="user-email">–</p>
+        <p id="avatarStatus" class="status-line" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="profile-card">
+      <h2 class="card-title" data-i18n="profile.email.title">E-Mail-Adresse ändern</h2>
+      <p class="card-hint" data-i18n="profile.email.hint">Zur Bestätigung benötigen wir dein aktuelles Passwort.</p>
+      <form id="emailForm" class="profile-form" novalidate>
+        <label class="field">
+          <span data-i18n="profile.email.newLabel">Neue E-Mail-Adresse</span>
+          <input type="email" name="newEmail" required autocomplete="email">
+        </label>
+        <label class="field">
+          <span data-i18n="profile.email.passwordLabel">Aktuelles Passwort</span>
+          <input type="password" name="password" required autocomplete="current-password">
+        </label>
+        <p class="form-message" id="emailMessage" role="status" aria-live="polite"></p>
+        <button type="submit" class="primary-btn" data-i18n="profile.email.submit">E-Mail aktualisieren</button>
+      </form>
+    </section>
+
+    <section class="profile-card">
+      <h2 class="card-title" data-i18n="profile.password.title">Passwort ändern</h2>
+      <p class="card-hint" data-i18n="profile.password.hint">Du musst dein aktuelles Passwort kennen, um es zu ändern.</p>
+      <form id="passwordForm" class="profile-form" novalidate>
+        <label class="field">
+          <span data-i18n="profile.password.oldLabel">Aktuelles Passwort</span>
+          <input type="password" name="oldPassword" required autocomplete="current-password">
+        </label>
+        <label class="field">
+          <span data-i18n="profile.password.newLabel">Neues Passwort (mind. 6 Zeichen)</span>
+          <input type="password" name="newPassword" required minlength="6" autocomplete="new-password">
+        </label>
+        <label class="field">
+          <span data-i18n="profile.password.confirmLabel">Neues Passwort bestätigen</span>
+          <input type="password" name="newPasswordConfirm" required minlength="6" autocomplete="new-password">
+        </label>
+        <p class="form-message" id="passwordMessage" role="status" aria-live="polite"></p>
+        <button type="submit" class="primary-btn" data-i18n="profile.password.submit">Passwort aktualisieren</button>
+      </form>
+    </section>
+  </main>
+</body>
+
+</html>
