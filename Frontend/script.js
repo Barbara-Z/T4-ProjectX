@@ -109,59 +109,11 @@ function redirectToQuiz() {
   }
 }
 
-// ==== Film-Details der Filme auf der Homepage anzeigen ====
-// Modal Funktionen für Film-Details
-// Film-Details vom Backend laden und Modal anzeigen
-async function openMovieModal(movie) {
-  try {
-    console.log('Film-Modal geöffnet für:', movie.title || movie.name, 'ID:', movie.id);
-    
-    // Lade detaillierte Infos vom Backend (mit deutschem Text, Director, Writer, etc.)
-    const response = await fetch(`${API_BASE}/api/movie-details/${movie.id}`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const details = await response.json();
-    console.log('Film-Details geladen:', details);
-    
-    // Film-Daten in Modal einfügen
-    document.getElementById('modalTitle').textContent = details.title;
-    document.getElementById('modalRating').textContent = details.vote_average.toFixed(1);
-    document.getElementById('modalReleaseDate').textContent = details.release_date_formatted || 'Unbekannt';
-    document.getElementById('modalRuntime').textContent = details.runtime_formatted || 'Unbekannt';
-    document.getElementById('modalGenres').textContent = details.genres || 'Unbekannt';
-    document.getElementById('modalDirector').textContent = details.director || 'Unbekannt';
-    document.getElementById('modalWriter').textContent = details.writers || 'Unbekannt';
-    document.getElementById('modalVoteCount').textContent = `${details.vote_count}`;
-    document.getElementById('modalOverview').textContent = details.overview || 'Keine Beschreibung verfügbar';
-    
-    // Poster-Bild setzen
-    const posterUrl = `https://image.tmdb.org/t/p/w500${details.poster_path}`;
-    document.getElementById('modalPoster').src = posterUrl;
-    document.getElementById('modalPoster').alt = details.title;
-    
-    // Modal anzeigen
-    const modal = document.getElementById('movieModal');
-    modal.classList.add('show');
-    
-    // Body scrollen verhindern wenn Modal offen ist
-    document.body.style.overflow = 'hidden';
-  } catch (error) {
-    console.error('Fehler beim Laden der Film-Details:', error);
-    alert('Fehler beim Laden der Film-Details: ' + error.message);
-  }
+// Navigation zur Film-Detailseite. Wird von Trending-Klicks und Suchvorschlägen genutzt.
+function goToMoviePage(movieId) {
+  if (!movieId) return;
+  window.location.href = `Movie.html?id=${encodeURIComponent(movieId)}`;
 }
-
-function closeMovieModal() {
-  const modal = document.getElementById('movieModal');
-  modal.classList.remove('show');
-  
-  // Body scrollen wieder erlauben
-  document.body.style.overflow = 'auto';
-}
-// ==== Ende Film-Details Funktionen ====
 
 // Session beim Laden der Seite abrufen
 loadUserSession();
@@ -208,8 +160,10 @@ async function loadTrendingMovies() {
 }
 
 // Filme in HTML-Karten umwandeln und auf Seite anzeigen
+// (wird auch von Search.html genutzt, deshalb global verfügbar)
 function displayMovies(movies, containerId) {
   const container = document.getElementById(containerId);
+  if (!container) return;
   container.innerHTML = ''; // Container leeren
 
   let addedMovies = 0;
@@ -237,9 +191,9 @@ function displayMovies(movies, containerId) {
       </div>
     `;
     
-    // Click-Event für Film-Details - Modal öffnen
+    // Click-Event: zur Film-Detailseite navigieren
     movieCard.addEventListener('click', () => {
-      openMovieModal(movie);
+      goToMoviePage(movie.id);
     });
     
     // Film-Karte zum Carousel hinzufügen
@@ -248,28 +202,307 @@ function displayMovies(movies, containerId) {
   console.log(`${addedMovies} Filme hinzugefügt zu ${containerId}`);
 }
 
-// Beim Laden der Seite - Trend-Filme laden
-loadTrendingMovies();
+// Trend-Filme nur laden, wenn die Homepage geladen ist (Carousel vorhanden)
+if (document.getElementById("trendingCarousel")) {
+  loadTrendingMovies();
+}
 
-// Modal Close Button und Hintergrund Event-Listener
-document.addEventListener('DOMContentLoaded', function() {
-  const modal = document.getElementById('movieModal');
-  const closeButton = document.querySelector('.modal-close');
-  
-  // Close Button Listener
-  closeButton.addEventListener('click', closeMovieModal);
-  
-  // Modal Hintergrund Listener - Schließen wenn außerhalb geklickt wird
-  modal.addEventListener('click', function(e) {
-    if (e.target === modal) {
-      closeMovieModal();
+// ============================================================
+// SUCHE: Live-Autocomplete + Suchverlauf
+// ============================================================
+
+const SEARCH_DEBOUNCE_MS = 220;
+let searchDebounceTimer = null;
+let searchAbortController = null;
+let searchActiveIndex = -1;
+let searchCurrentItems = []; // {id, title, poster_path} für Tastaturnavigation
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function posterThumb(path) {
+  return path
+    ? `https://image.tmdb.org/t/p/w92${path}`
+    : "https://via.placeholder.com/40x60/2a2a2a/666?text=%3F";
+}
+
+// Vorschläge im Dropdown rendern (Autocomplete-Treffer)
+function renderSearchSuggestions(items) {
+  const dropdown = document.getElementById("searchDropdown");
+  searchCurrentItems = items;
+  searchActiveIndex = -1;
+
+  if (!items.length) {
+    dropdown.innerHTML = `<div class="search-empty">${t("search.noResults", "Keine Ergebnisse gefunden")}</div>`;
+    dropdown.hidden = false;
+    return;
+  }
+
+  const html = items.map((m, i) => {
+    const year = (m.release_date || "").slice(0, 4);
+    const rating = m.vote_average ? `⭐ ${m.vote_average.toFixed(1)}` : "";
+    const meta = [year, rating].filter(Boolean).join(" · ");
+    return `
+      <div class="search-suggestion" data-index="${i}" data-id="${m.id}">
+        <img src="${posterThumb(m.poster_path)}" alt="">
+        <div class="search-suggestion-info">
+          <div class="search-suggestion-title">${escapeHtml(m.title)}</div>
+          <div class="search-suggestion-meta">${meta}</div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  dropdown.innerHTML = html;
+  dropdown.hidden = false;
+
+  dropdown.querySelectorAll(".search-suggestion").forEach(el => {
+    el.addEventListener("click", () => {
+      const i = parseInt(el.dataset.index, 10);
+      handleSuggestionPick(searchCurrentItems[i]);
+    });
+  });
+}
+
+// Suchverlauf rendern (wenn Input leer & User eingeloggt)
+function renderSearchHistory(history) {
+  const dropdown = document.getElementById("searchDropdown");
+  searchCurrentItems = history;
+  searchActiveIndex = -1;
+
+  if (!history.length) {
+    dropdown.hidden = true;
+    return;
+  }
+
+  const items = history.map((m, i) => `
+    <div class="search-suggestion" data-index="${i}" data-id="${m.movie_id}">
+      <img src="${posterThumb(m.poster_path)}" alt="">
+      <div class="search-suggestion-info">
+        <div class="search-suggestion-title">${escapeHtml(m.title)}</div>
+        <div class="search-suggestion-meta">${t("search.previousSearch", "Zuletzt gesucht")}</div>
+      </div>
+    </div>
+  `).join("");
+
+  dropdown.innerHTML = `
+    <div class="search-dropdown-header">
+      <span>${t("search.history", "Suchverlauf")}</span>
+      <button type="button" class="search-clear-btn" id="searchClearBtn">
+        ${t("search.clear", "Verlauf löschen")}
+      </button>
+    </div>
+    ${items}
+  `;
+  dropdown.hidden = false;
+
+  dropdown.querySelectorAll(".search-suggestion").forEach(el => {
+    el.addEventListener("click", () => {
+      const i = parseInt(el.dataset.index, 10);
+      const entry = searchCurrentItems[i];
+      handleSuggestionPick({
+        id: entry.movie_id,
+        title: entry.title,
+        poster_path: entry.poster_path
+      });
+    });
+  });
+
+  document.getElementById("searchClearBtn")?.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    await clearSearchHistory();
+  });
+}
+
+async function fetchSearchSuggestions(query) {
+  if (searchAbortController) searchAbortController.abort();
+  searchAbortController = new AbortController();
+  const spinner = document.getElementById("searchSpinner");
+  spinner.classList.add("active");
+
+  try {
+    const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}`, {
+      signal: searchAbortController.signal
+    });
+    const data = await res.json();
+    return data.results || [];
+  } catch (err) {
+    if (err.name === "AbortError") return null;
+    console.error("Suchfehler:", err);
+    return [];
+  } finally {
+    spinner.classList.remove("active");
+  }
+}
+
+async function loadAndShowHistory() {
+  if (!currentUser) {
+    document.getElementById("searchDropdown").hidden = true;
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/search-history`, { credentials: "include" });
+    if (!res.ok) return;
+    const data = await res.json();
+    renderSearchHistory(data.history || []);
+  } catch (err) {
+    console.error("Suchverlauf-Fehler:", err);
+  }
+}
+
+async function clearSearchHistory() {
+  try {
+    await fetch(`${API_BASE}/api/search-history`, {
+      method: "DELETE",
+      credentials: "include"
+    });
+    document.getElementById("searchDropdown").hidden = true;
+  } catch (err) {
+    console.error("Suchverlauf-Löschen fehlgeschlagen:", err);
+  }
+}
+
+async function saveToSearchHistory(movie) {
+  if (!currentUser) return;
+  try {
+    await fetch(`${API_BASE}/api/search-history`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        movie_id: movie.id,
+        title: movie.title,
+        poster_path: movie.poster_path || null
+      })
+    });
+  } catch (err) {
+    console.error("Verlauf speichern fehlgeschlagen:", err);
+  }
+}
+
+// Wird ausgelöst, wenn der User einen Vorschlag oder Verlaufseintrag wählt.
+// Direkter Klick während der Suche -> direkt zur Film-Detailseite.
+function handleSuggestionPick(movie) {
+  if (!movie) return;
+  closeSearchDropdown();
+  document.getElementById("searchInput").value = "";
+  saveToSearchHistory(movie);
+  window.location.href = `Movie.html?id=${encodeURIComponent(movie.id)}`;
+}
+
+function closeSearchDropdown() {
+  const dropdown = document.getElementById("searchDropdown");
+  dropdown.hidden = true;
+  searchActiveIndex = -1;
+  searchCurrentItems = [];
+}
+
+function highlightActiveSuggestion() {
+  const dropdown = document.getElementById("searchDropdown");
+  dropdown.querySelectorAll(".search-suggestion").forEach((el, i) => {
+    el.classList.toggle("active", i === searchActiveIndex);
+    if (i === searchActiveIndex) el.scrollIntoView({ block: "nearest" });
+  });
+}
+
+// Allgemeine Suche: Enter im Input oder Klick auf die Lupe -> Ergebnisseite öffnen.
+function submitGeneralSearch() {
+  const input = document.getElementById("searchInput");
+  const query = (input?.value || "").trim();
+  if (!query) return;
+  closeSearchDropdown();
+  window.location.href = `Search.html?q=${encodeURIComponent(query)}`;
+}
+
+function initSearch() {
+  const input = document.getElementById("searchInput");
+  const form = document.getElementById("searchBar");
+  if (!input) return;
+
+  // Form-Submit fängt Enter UND Klick auf den Lupen-Button ab.
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      // Wenn ein Vorschlag aktiv markiert ist, hat das keydown-Handling Vorrang.
+      if (searchActiveIndex >= 0 && searchCurrentItems.length) return;
+      submitGeneralSearch();
+    });
+  }
+
+  input.addEventListener("input", () => {
+    const query = input.value.trim();
+    clearTimeout(searchDebounceTimer);
+
+    if (query.length === 0) {
+      // Leeres Feld -> Verlauf zeigen, falls eingeloggt
+      loadAndShowHistory();
+      return;
+    }
+
+    if (query.length < 2) {
+      // Erst ab 2 Zeichen sinnvoll suchen
+      document.getElementById("searchDropdown").hidden = true;
+      return;
+    }
+
+    searchDebounceTimer = setTimeout(async () => {
+      const items = await fetchSearchSuggestions(query);
+      if (items === null) return; // abgebrochen
+      renderSearchSuggestions(items);
+    }, SEARCH_DEBOUNCE_MS);
+  });
+
+  // Beim Fokussieren mit leerem Feld: Verlauf zeigen
+  input.addEventListener("focus", () => {
+    if (input.value.trim().length === 0) {
+      loadAndShowHistory();
     }
   });
-  
-  // Escape-Taste zum Schließen des Modals
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && modal.classList.contains('show')) {
-      closeMovieModal();
+
+  // Tastaturnavigation: ↑ ↓ Enter Esc
+  input.addEventListener("keydown", (e) => {
+    const dropdown = document.getElementById("searchDropdown");
+    if (dropdown.hidden || !searchCurrentItems.length) {
+      if (e.key === "Enter") e.preventDefault();
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      searchActiveIndex = (searchActiveIndex + 1) % searchCurrentItems.length;
+      highlightActiveSuggestion();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      searchActiveIndex = (searchActiveIndex - 1 + searchCurrentItems.length) % searchCurrentItems.length;
+      highlightActiveSuggestion();
+    } else if (e.key === "Enter") {
+      if (searchActiveIndex >= 0) {
+        e.preventDefault();
+        const item = searchCurrentItems[searchActiveIndex];
+        // Verlaufs-Einträge haben movie_id, Vorschläge haben id
+        const movie = item.movie_id
+          ? { id: item.movie_id, title: item.title, poster_path: item.poster_path }
+          : item;
+        handleSuggestionPick(movie);
+      }
+    } else if (e.key === "Escape") {
+      closeSearchDropdown();
+      input.blur();
     }
   });
+
+  // Klick außerhalb -> Dropdown schließen
+  document.addEventListener("click", (e) => {
+    const bar = document.querySelector(".search-bar");
+    if (bar && !bar.contains(e.target)) {
+      closeSearchDropdown();
+    }
+  });
+}
+
+// Auf jeder Seite mit Header: Suche initialisieren.
+document.addEventListener("DOMContentLoaded", () => {
+  initSearch();
 });

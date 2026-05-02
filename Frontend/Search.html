@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineMatch</title>
+    <title>Suche | CineMatch</title>
     <link rel="stylesheet" href="CineMatch.css">
     <link rel="icon" type="image/ico" href="CineMatchLogo.png">
     <script src="i18n.js" defer></script>
@@ -12,8 +12,8 @@
 
 <body id="body">
     <div id="header">
-        <img src="CineMatchLogo_Schatten.png" alt="CineMatchLogo" class="CineMatchLogo">
-        <h1 class="title">CineMatch</h1>
+        <a href="CineMatch.html"><img src="CineMatchLogo_Schatten.png" alt="CineMatchLogo" class="CineMatchLogo"></a>
+        <h1 class="title"><a href="CineMatch.html" style="color:inherit;text-decoration:none;">CineMatch</a></h1>
         <div class="search-container">
             <form class="search-bar" id="searchBar" role="search" autocomplete="off">
                 <span class="search-bar-logo" aria-hidden="true">🎬</span>
@@ -27,9 +27,7 @@
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                 </button>
-                <div class="search-dropdown" id="searchDropdown" hidden>
-                    <!-- Vorschläge / Verlauf werden hier dynamisch eingefügt -->
-                </div>
+                <div class="search-dropdown" id="searchDropdown" hidden></div>
             </form>
         </div>
         <div class="header-right">
@@ -38,19 +36,22 @@
             <div id="userArea" class="user-area"></div>
         </div>
     </div>
+
     <div id="content">
         <div class="section">
-            <h2 data-i18n="section.trending">Im Trend</h2>
-            <div class="movie-carousel" id="trendingCarousel">
-                <!-- Filme werden hier dynamisch eingefügt -->
-            </div>
+            <h2 id="searchHeadline" data-i18n="search.resultsTitle">Suchergebnisse</h2>
+            <p id="searchSubline" class="search-subline"></p>
+            <div class="movie-carousel" id="searchResults"></div>
+            <div id="searchEmpty" class="search-page-empty" hidden></div>
         </div>
     </div>
+
     <div id="footer">
         <img src="tmdbLogo.svg" alt="tmdbLogo" class="tmdbLogo">
     </div>
 
     <script src="script.js"></script>
+    <script src="search.js"></script>
 </body>
 
 </html>

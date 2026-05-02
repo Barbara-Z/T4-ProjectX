@@ -113,7 +113,45 @@ const translations = {
     "msg.fileReadError": "Datei konnte nicht gelesen werden",
 
     // Generisch
-    "generic.user": "Benutzer"
+    "generic.user": "Benutzer",
+
+    // Suche
+    "search.history": "Suchverlauf",
+    "search.previousSearch": "Zuletzt gesucht",
+    "search.clear": "Verlauf löschen",
+    "search.noResults": "Keine Ergebnisse gefunden",
+
+    // Modal-Erweiterung
+    "modal.providers": "Verfügbar bei",
+
+    // Kommentare
+    "comments.title": "Kommentare",
+    "comments.placeholder": "Was hältst du von diesem Film?",
+    "comments.submit": "Kommentar posten",
+    "comments.empty": "Noch keine Kommentare. Sei der Erste!",
+    "comments.loading": "Kommentare werden geladen...",
+    "comments.error": "Kommentare konnten nicht geladen werden.",
+
+    // Login-Required-Modal
+    "loginRequired.title": "Login erforderlich",
+    "loginRequired.text": "Du musst eingeloggt sein, um Kommentare zu schreiben.",
+    "loginRequired.loginBtn": "Anmelden",
+    "loginRequired.registerBtn": "Registrieren",
+
+    // Search-Page
+    "search.resultsTitle": "Suchergebnisse",
+    "search.resultsFor": "Ergebnisse für „{q}“",
+    "search.subline": "Klicke einen Film an, um Details zu sehen.",
+    "search.noQuery": "Bitte einen Suchbegriff eingeben.",
+    "search.noResultsFor": "Keine Filme gefunden.",
+    "search.error": "Suche fehlgeschlagen. Bitte später erneut versuchen.",
+
+    // Movie-Page
+    "movie.loading": "Film wird geladen...",
+    "movie.invalidId": "Ungültige Film-ID.",
+    "movie.unknown": "Unbekannt",
+    "movie.noOverview": "Keine Beschreibung verfügbar.",
+    "movie.loadError": "Film konnte nicht geladen werden."
   },
 
   en: {
@@ -216,7 +254,39 @@ const translations = {
     "msg.profileLoadError": "Could not load profile",
     "msg.fileReadError": "File could not be read",
 
-    "generic.user": "User"
+    "generic.user": "User",
+
+    "search.history": "Search history",
+    "search.previousSearch": "Recently searched",
+    "search.clear": "Clear history",
+    "search.noResults": "No results found",
+
+    "modal.providers": "Available on",
+
+    "comments.title": "Comments",
+    "comments.placeholder": "What did you think of this movie?",
+    "comments.submit": "Post comment",
+    "comments.empty": "No comments yet. Be the first!",
+    "comments.loading": "Loading comments...",
+    "comments.error": "Comments could not be loaded.",
+
+    "loginRequired.title": "Login required",
+    "loginRequired.text": "You must be logged in to write comments.",
+    "loginRequired.loginBtn": "Sign in",
+    "loginRequired.registerBtn": "Sign up",
+
+    "search.resultsTitle": "Search results",
+    "search.resultsFor": "Results for \"{q}\"",
+    "search.subline": "Click a movie to see its details.",
+    "search.noQuery": "Please enter a search term.",
+    "search.noResultsFor": "No movies found.",
+    "search.error": "Search failed. Please try again later.",
+
+    "movie.loading": "Loading movie...",
+    "movie.invalidId": "Invalid movie ID.",
+    "movie.unknown": "Unknown",
+    "movie.noOverview": "No description available.",
+    "movie.loadError": "Could not load movie."
   }
 };
 
