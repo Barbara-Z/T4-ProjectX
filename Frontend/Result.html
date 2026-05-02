@@ -4,9 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Deine Empfehlungen | CineMatch</title>
+  <title data-i18n="result.pageTitle">Deine Empfehlungen | CineMatch</title>
   <link rel="icon" type="image/png" href="CineMatchLogo.png">
   <link rel="stylesheet" href="Result.css">
+  <script src="i18n.js" defer></script>
   <script src="result.js" defer></script>
 </head>
 
@@ -16,26 +17,29 @@
       <img src="CineMatchLogo.png" alt="CineMatch" class="brand-logo">
       <span class="brand-name">CineMatch</span>
     </a>
-    <a href="/Quiz.html" class="retake-btn">Quiz wiederholen</a>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <div class="lang-toggle" id="langToggle" role="group" aria-label="Language"></div>
+      <a href="/Quiz.html" class="retake-btn" data-i18n="result.retake">Quiz wiederholen</a>
+    </div>
   </header>
 
   <main class="result-main">
     <section class="result-hero">
-      <p class="result-eyebrow">Dein Match-Ergebnis</p>
-      <h1 class="result-title">Diese Filme passen zu dir</h1>
+      <p class="result-eyebrow" data-i18n="result.eyebrow">Dein Match-Ergebnis</p>
+      <h1 class="result-title" data-i18n="result.title">Diese Filme passen zu dir</h1>
       <p class="result-subtitle">
-        Top-Genre: <span id="top-genre" class="result-tag">–</span>
+        <span data-i18n="result.topGenre">Top-Genre:</span> <span id="top-genre" class="result-tag">–</span>
         <span id="prefs-summary" class="prefs-summary"></span>
       </p>
     </section>
 
     <section id="cards" class="cards" aria-live="polite">
-      <div class="loading">Empfehlungen werden geladen…</div>
+      <div class="loading" data-i18n="result.loading">Empfehlungen werden geladen…</div>
     </section>
   </main>
 
   <footer class="result-footer">
-    <span>Empfehlungen powered by</span>
+    <span data-i18n="result.poweredBy">Empfehlungen powered by</span>
     <img src="tmdbLogo.svg" alt="TMDB" class="tmdb-logo">
   </footer>
 </body>

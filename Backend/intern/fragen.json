@@ -1,179 +1,199 @@
 [
   {
     "frage": "Welche Art von Erlebnis suchst du?",
+    "frage_en": "What kind of experience are you looking for?",
     "antworten": [
-      { "text": "Actionreiche Spannung", "punkte": { "action": 2, "thriller": 1 } },
-      { "text": "Lustige Unterhaltung", "punkte": { "comedy": 2, "family": 1 } },
-      { "text": "Emotionale Geschichte", "punkte": { "drama": 2, "romance": 1 } },
-      { "text": "Fantastische Welten", "punkte": { "fantasy": 2, "science_fiction": 1 } }
+      { "text": "Actionreiche Spannung", "text_en": "Action-packed excitement", "punkte": { "action": 2, "thriller": 1 } },
+      { "text": "Lustige Unterhaltung", "text_en": "Fun entertainment", "punkte": { "comedy": 2, "family": 1 } },
+      { "text": "Emotionale Geschichte", "text_en": "Emotional story", "punkte": { "drama": 2, "romance": 1 } },
+      { "text": "Fantastische Welten", "text_en": "Fantastical worlds", "punkte": { "fantasy": 2, "science_fiction": 1 } }
     ]
   },
   {
     "frage": "Welches Thema interessiert dich am meisten?",
+    "frage_en": "Which topic interests you most?",
     "antworten": [
-      { "text": "Verbrechen und Ermittlungen", "punkte": { "crime": 2, "mystery": 1, "thriller": 1 } },
-      { "text": "Historische Ereignisse", "punkte": { "history": 2, "war": 1 } },
-      { "text": "Musik und Kunst", "punkte": { "music": 3 } },
-      { "text": "Natur / echte Geschichten", "punkte": { "documentary": 2 } }
+      { "text": "Verbrechen und Ermittlungen", "text_en": "Crime and investigation", "punkte": { "crime": 2, "mystery": 1, "thriller": 1 } },
+      { "text": "Historische Ereignisse", "text_en": "Historical events", "punkte": { "history": 2, "war": 1 } },
+      { "text": "Musik und Kunst", "text_en": "Music and art", "punkte": { "music": 3 } },
+      { "text": "Natur / echte Geschichten", "text_en": "Nature / true stories", "punkte": { "documentary": 2 } }
     ]
   },
   {
     "frage": "Welche Atmosphäre bevorzugst du?",
+    "frage_en": "Which atmosphere do you prefer?",
     "antworten": [
-      { "text": "spannend und nervenaufreibend", "punkte": { "thriller": 2, "horror": 1 } },
-      { "text": "leicht und positiv", "punkte": { "comedy": 2 } },
-      { "text": "ernst und emotional", "punkte": { "drama": 2 } },
-      { "text": "episch und groß", "punkte": { "adventure": 2, "fantasy": 1 } }
+      { "text": "spannend und nervenaufreibend", "text_en": "tense and nerve-wracking", "punkte": { "thriller": 2, "horror": 1 } },
+      { "text": "leicht und positiv", "text_en": "light and positive", "punkte": { "comedy": 2 } },
+      { "text": "ernst und emotional", "text_en": "serious and emotional", "punkte": { "drama": 2 } },
+      { "text": "episch und groß", "text_en": "epic and grand", "punkte": { "adventure": 2, "fantasy": 1 } }
     ]
   },
   {
     "frage": "Welche Art von Geschichte möchtest du sehen?",
+    "frage_en": "What kind of story do you want to see?",
     "antworten": [
-      { "text": "Heldenreise / Abenteuer", "punkte": { "adventure": 2, "action": 1 } },
-      { "text": "Liebesgeschichte", "punkte": { "romance": 2 } },
-      { "text": "Rätsel / Geheimnisse", "punkte": { "mystery": 2 } },
-      { "text": "Zukunft / Technologie", "punkte": { "science_fiction": 2 } }
+      { "text": "Heldenreise / Abenteuer", "text_en": "Hero's journey / adventure", "punkte": { "adventure": 2, "action": 1 } },
+      { "text": "Liebesgeschichte", "text_en": "Love story", "punkte": { "romance": 2 } },
+      { "text": "Rätsel / Geheimnisse", "text_en": "Puzzles / mysteries", "punkte": { "mystery": 2 } },
+      { "text": "Zukunft / Technologie", "text_en": "Future / technology", "punkte": { "science_fiction": 2 } }
     ]
   },
   {
     "frage": "Wie intensiv darf der Film sein?",
+    "frage_en": "How intense can the movie be?",
     "antworten": [
-      { "text": "sehr intensiv / beängstigend", "punkte": { "horror": 2, "thriller": 1 } },
-      { "text": "mittelmäßig spannend", "punkte": { "action": 1, "crime": 1 } },
-      { "text": "entspannt", "punkte": { "comedy": 2, "family": 1 } }
+      { "text": "sehr intensiv / beängstigend", "text_en": "very intense / scary", "punkte": { "horror": 2, "thriller": 1 } },
+      { "text": "mittelmäßig spannend", "text_en": "moderately exciting", "punkte": { "action": 1, "crime": 1 } },
+      { "text": "entspannt", "text_en": "relaxed", "punkte": { "comedy": 2, "family": 1 } }
     ]
   },
   {
     "frage": "Welches Setting interessiert dich?",
+    "frage_en": "Which setting interests you?",
     "antworten": [
-      { "text": "Vergangenheit", "punkte": { "history": 2, "war": 1 } },
-      { "text": "Gegenwart", "punkte": { "drama": 1, "crime": 1 } },
-      { "text": "Zukunft / andere Welten", "punkte": { "science_fiction": 2, "fantasy": 1 } },
-      { "text": "Wilder Westen", "punkte": { "western": 2 } }
+      { "text": "Vergangenheit", "text_en": "The past", "punkte": { "history": 2, "war": 1 } },
+      { "text": "Gegenwart", "text_en": "The present", "punkte": { "drama": 1, "crime": 1 } },
+      { "text": "Zukunft / andere Welten", "text_en": "Future / other worlds", "punkte": { "science_fiction": 2, "fantasy": 1 } },
+      { "text": "Wilder Westen", "text_en": "Wild West", "punkte": { "western": 2 } }
     ]
   },
   {
     "frage": "Was soll im Mittelpunkt stehen?",
+    "frage_en": "What should be the focus?",
     "antworten": [
-      { "text": "Action & Kämpfe", "punkte": { "action": 2, "war": 1 } },
-      { "text": "Beziehungen", "punkte": { "romance": 2, "drama": 1 } },
-      { "text": "Ermittlungen", "punkte": { "crime": 2, "mystery": 1 } },
-      { "text": "Entdeckung & Reise", "punkte": { "adventure": 2 } }
+      { "text": "Action & Kämpfe", "text_en": "Action & fights", "punkte": { "action": 2, "war": 1 } },
+      { "text": "Beziehungen", "text_en": "Relationships", "punkte": { "romance": 2, "drama": 1 } },
+      { "text": "Ermittlungen", "text_en": "Investigations", "punkte": { "crime": 2, "mystery": 1 } },
+      { "text": "Entdeckung & Reise", "text_en": "Discovery & travel", "punkte": { "adventure": 2 } }
     ]
   },
   {
     "frage": "Welchen Stil bevorzugst du?",
+    "frage_en": "Which style do you prefer?",
     "antworten": [
-      { "text": "realistisch", "punkte": { "drama": 2, "documentary": 1 } },
-      { "text": "kreativ / fantasievoll", "punkte": { "fantasy": 2 } },
-      { "text": "technisch / futuristisch", "punkte": { "science_fiction": 2 } },
-      { "text": "klassisch / traditionell", "punkte": { "western": 2, "history": 2 } }
+      { "text": "realistisch", "text_en": "realistic", "punkte": { "drama": 2, "documentary": 1 } },
+      { "text": "kreativ / fantasievoll", "text_en": "creative / imaginative", "punkte": { "fantasy": 2 } },
+      { "text": "technisch / futuristisch", "text_en": "technical / futuristic", "punkte": { "science_fiction": 2 } },
+      { "text": "klassisch / traditionell", "text_en": "classic / traditional", "punkte": { "western": 2, "history": 2 } }
     ]
   },
   {
     "frage": "Welche Emotion soll im Vordergrund stehen?",
+    "frage_en": "Which emotion should be in the foreground?",
     "antworten": [
-      { "text": "Spannung", "punkte": { "thriller": 2 } },
-      { "text": "Angst", "punkte": { "horror": 2 } },
-      { "text": "Freude", "punkte": { "comedy": 2, "family": 2 } },
-      { "text": "Mitgefühl", "punkte": { "drama": 2, "romance": 1, "family": 1 } }
+      { "text": "Spannung", "text_en": "Suspense", "punkte": { "thriller": 2 } },
+      { "text": "Angst", "text_en": "Fear", "punkte": { "horror": 2 } },
+      { "text": "Freude", "text_en": "Joy", "punkte": { "comedy": 2, "family": 2 } },
+      { "text": "Mitgefühl", "text_en": "Compassion", "punkte": { "drama": 2, "romance": 1, "family": 1 } }
     ]
   },
   {
     "frage": "Was soll der Film zusätzlich bieten?",
+    "frage_en": "What else should the movie offer?",
     "antworten": [
-      { "text": "Musik / Performance", "punkte": { "music": 3 } },
-      { "text": "reale Hintergründe", "punkte": { "documentary": 3 } },
-      { "text": "große Schlachten", "punkte": { "war": 2 } },
-      { "text": "nichts Spezielles", "punkte": { "drama": 1 } }
+      { "text": "Musik / Performance", "text_en": "Music / performance", "punkte": { "music": 3 } },
+      { "text": "reale Hintergründe", "text_en": "real-life background", "punkte": { "documentary": 3 } },
+      { "text": "große Schlachten", "text_en": "large battles", "punkte": { "war": 2 } },
+      { "text": "nichts Spezielles", "text_en": "nothing special", "punkte": { "drama": 1 } }
     ]
   },
   {
     "frage": "Wie sehr magst du Fantasy?",
+    "frage_en": "How much do you like fantasy?",
     "antworten": [
-      { "text": "Sehr", "punkte": { "fantasy": 3 } },
-      { "text": "Eher weniger", "punkte": { "fantasy": 2 } },
-      { "text": "Wenig", "punkte": { "fantasy": 0 } }
+      { "text": "Sehr", "text_en": "A lot", "punkte": { "fantasy": 3 } },
+      { "text": "Eher weniger", "text_en": "Somewhat less", "punkte": { "fantasy": 2 } },
+      { "text": "Wenig", "text_en": "Not much", "punkte": { "fantasy": 0 } }
     ]
   },
   {
     "frage": "Wie stehst du zu gruseligen oder beängstigenden Filmen?",
+    "frage_en": "How do you feel about scary or frightening movies?",
     "antworten": [
-      { "text": "mag ich sehr", "punkte": { "horror": 2 } },
-      { "text": "geht so", "punkte": { "horror": 1 } },
-      { "text": "gar nicht", "punkte": { "horror": 0 } }
+      { "text": "mag ich sehr", "text_en": "I love them", "punkte": { "horror": 2 } },
+      { "text": "geht so", "text_en": "they're okay", "punkte": { "horror": 1 } },
+      { "text": "gar nicht", "text_en": "not at all", "punkte": { "horror": 0 } }
     ]
   },
   {
     "frage": "Wie wichtig sind dir romantische Elemente?",
+    "frage_en": "How important are romantic elements to you?",
     "antworten": [
-      { "text": "sehr wichtig", "punkte": { "romance": 2 } },
-      { "text": "teilweise", "punkte": { "romance": 1 } },
-      { "text": "unwichtig", "punkte": { "romance": 0 } }
+      { "text": "sehr wichtig", "text_en": "very important", "punkte": { "romance": 2 } },
+      { "text": "teilweise", "text_en": "somewhat", "punkte": { "romance": 1 } },
+      { "text": "unwichtig", "text_en": "not important", "punkte": { "romance": 0 } }
     ]
   },
   {
     "frage": "Wie sehr legst du Wert auf Humor?",
+    "frage_en": "How much do you value humor?",
     "antworten": [
-      { "text": "sehr", "punkte": { "comedy": 2 } },
-      { "text": "etwas", "punkte": { "comedy": 1 } },
-      { "text": "kaum", "punkte": { "comedy": 0 } }
+      { "text": "sehr", "text_en": "a lot", "punkte": { "comedy": 2 } },
+      { "text": "etwas", "text_en": "somewhat", "punkte": { "comedy": 1 } },
+      { "text": "kaum", "text_en": "barely", "punkte": { "comedy": 0 } }
     ]
   },
   {
     "frage": "Wie sehr interessieren dich historische oder kriegsbezogene Themen?",
+    "frage_en": "How interested are you in historical or war-related topics?",
     "antworten": [
-      { "text": "sehr", "punkte": { "history": 2, "war": 2 } },
-      { "text": "etwas", "punkte": { "history": 1, "war": 1 } },
-      { "text": "kaum", "punkte": { "history": 0, "war": 0 } }
+      { "text": "sehr", "text_en": "very", "punkte": { "history": 2, "war": 2 } },
+      { "text": "etwas", "text_en": "somewhat", "punkte": { "history": 1, "war": 1 } },
+      { "text": "kaum", "text_en": "barely", "punkte": { "history": 0, "war": 0 } }
     ]
   },
   {
     "frage": "Wie wichtig sind Musik oder Performance im Film?",
+    "frage_en": "How important is music or performance in a movie?",
     "antworten": [
-      { "text": "sehr", "punkte": { "music": 3 } },
-      { "text": "etwas", "punkte": { "music": 2 } },
-      { "text": "kaum", "punkte": { "music": 0 } }
+      { "text": "sehr", "text_en": "very", "punkte": { "music": 3 } },
+      { "text": "etwas", "text_en": "somewhat", "punkte": { "music": 2 } },
+      { "text": "kaum", "text_en": "barely", "punkte": { "music": 0 } }
     ]
   },
 
   {
     "frage": "Für wen ist der Film gedacht?",
+    "frage_en": "Who is the movie for?",
     "filter": "audience",
     "antworten": [
-      { "text": "nur für Erwachsene", "value": "adult" },
-      { "text": "mit Familie / Kindern", "value": "family" },
-      { "text": "egal", "value": "any" }
+      { "text": "nur für Erwachsene", "text_en": "adults only", "value": "adult" },
+      { "text": "mit Familie / Kindern", "text_en": "with family / kids", "value": "family" },
+      { "text": "egal", "text_en": "doesn't matter", "value": "any" }
     ]
   },
   {
     "frage": "Auf welcher Plattform möchtest du den Film schauen?",
+    "frage_en": "On which platform do you want to watch the movie?",
     "filter": "provider",
     "antworten": [
-      { "text": "Netflix", "value": "netflix" },
-      { "text": "Amazon Prime", "value": "amazon" },
-      { "text": "Disney+", "value": "disney" },
-      { "text": "egal", "value": "any" }
+      { "text": "Netflix", "text_en": "Netflix", "value": "netflix" },
+      { "text": "Amazon Prime", "text_en": "Amazon Prime", "value": "amazon" },
+      { "text": "Disney+", "text_en": "Disney+", "value": "disney" },
+      { "text": "egal", "text_en": "doesn't matter", "value": "any" }
     ]
   },
   {
     "frage": "Welche Art von Film bevorzugst du?",
+    "frage_en": "Which type of movie do you prefer?",
     "filter": "type",
     "antworten": [
-      { "text": "Animiert", "value": "animation" },
-      { "text": "Anime", "value": "anime" },
-      { "text": "Realfilm", "value": "live_action" },
-      { "text": "egal", "value": "any" }
+      { "text": "Animiert", "text_en": "Animated", "value": "animation" },
+      { "text": "Anime", "text_en": "Anime", "value": "anime" },
+      { "text": "Realfilm", "text_en": "Live action", "value": "live_action" },
+      { "text": "egal", "text_en": "doesn't matter", "value": "any" }
     ]
   },
   {
     "frage": "Welche Filmlänge passt dir am besten?",
+    "frage_en": "Which movie length suits you best?",
     "filter": "runtime",
     "antworten": [
-      { "text": "unter 90 Minuten", "value": "short" },
-      { "text": "90–120 Minuten", "value": "medium" },
-      { "text": "über 120 Minuten", "value": "long" },
-      { "text": "egal", "value": "any" }
+      { "text": "unter 90 Minuten", "text_en": "under 90 minutes", "value": "short" },
+      { "text": "90–120 Minuten", "text_en": "90–120 minutes", "value": "medium" },
+      { "text": "über 120 Minuten", "text_en": "over 120 minutes", "value": "long" },
+      { "text": "egal", "text_en": "doesn't matter", "value": "any" }
     ]
   }
 ]

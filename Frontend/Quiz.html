@@ -3,15 +3,17 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Quiz</title>
+    <title data-i18n="quiz.title">Quiz</title>
+    <script src="i18n.js" defer></script>
     <script src="quiz.js" defer></script>
     <link rel="icon" type="image/ico" href="CineMatchLogo.png">
 </head>
 
 <body>
-    <h2>Quiz</h2>
+    <div class="lang-toggle" id="langToggle" role="group" aria-label="Language"></div>
+    <h2 data-i18n="quiz.title">Quiz</h2>
     <div id="frage"></div>
-    <button id="nächsteFrage">nächste Frage</button>
+    <button id="nächsteFrage" data-i18n="quiz.next">nächste Frage</button>
 </body>
 
 </html>

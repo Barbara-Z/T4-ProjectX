@@ -3,78 +3,67 @@
 // what the quiz pipeline produced.
 
 const POSTER_BASE = "https://image.tmdb.org/t/p/w500";
+const t = (key, fb) => (window.I18n ? window.I18n.t(key, fb) : fb || key);
 
-const PROVIDER_LABELS = {
-  netflix: "Netflix",
-  amazon: "Amazon Prime",
-  disney: "Disney+",
-  any: null
+const PREF_KEYS = {
+  provider: { netflix: "pref.provider.netflix", amazon: "pref.provider.amazon", disney: "pref.provider.disney" },
+  runtime: { short: "pref.runtime.short", medium: "pref.runtime.medium", long: "pref.runtime.long" },
+  type: { animation: "pref.type.animation", anime: "pref.type.anime", live_action: "pref.type.live_action" },
+  audience: { family: "pref.audience.family", adult: "pref.audience.adult" }
 };
 
-const RUNTIME_LABELS = {
-  short: "kurz (<90 min)",
-  medium: "mittel (90–120 min)",
-  long: "lang (>120 min)",
-  any: null
-};
-
-const TYPE_LABELS = {
-  animation: "animiert",
-  anime: "Anime",
-  live_action: "Realfilm",
-  any: null
-};
-
-const AUDIENCE_LABELS = {
-  family: "familienfreundlich",
-  adult: "Erwachsene",
-  any: null
-};
+let cachedResult = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   const raw = sessionStorage.getItem("quizResult");
-  const cards = document.getElementById("cards");
-
   if (!raw) {
-    cards.innerHTML = `
-      <div class="empty">
-        Es liegt noch kein Quiz-Ergebnis vor.
-        <br><br>
-        <a href="/Quiz.html" style="color:#bb0d13; font-weight:600;">Jetzt das Quiz starten →</a>
-      </div>`;
+    renderEmptyState();
     return;
   }
-
-  let result;
   try {
-    result = JSON.parse(raw);
+    cachedResult = JSON.parse(raw);
   } catch (err) {
-    cards.innerHTML = `<div class="error">Ergebnis konnte nicht gelesen werden.</div>`;
+    document.getElementById("cards").innerHTML =
+      `<div class="error">${t("result.readError")}</div>`;
     return;
   }
+  renderResult();
+});
 
-  document.getElementById("top-genre").textContent = formatGenre(result.topGenre);
-  document.getElementById("prefs-summary").textContent = formatPrefs(result.userPreferences);
+document.addEventListener("languagechange", renderResult);
 
-  const recs = Array.isArray(result.recommendations) ? result.recommendations : [];
+function renderEmptyState() {
+  document.getElementById("cards").innerHTML = `
+    <div class="empty">
+      ${t("result.noResult")}
+      <br><br>
+      <a href="/Quiz.html" style="color:#e50914; font-weight:600;">${t("result.startQuiz")}</a>
+    </div>`;
+}
 
+function renderResult() {
+  if (!cachedResult) return;
+  const cards = document.getElementById("cards");
+  document.getElementById("top-genre").textContent = formatGenre(cachedResult.topGenre);
+  document.getElementById("prefs-summary").textContent = formatPrefs(cachedResult.userPreferences);
+
+  const recs = Array.isArray(cachedResult.recommendations) ? cachedResult.recommendations : [];
   if (recs.length === 0) {
     cards.innerHTML = `
       <div class="empty">
-        Keine passenden Filme gefunden. Versuche es mit anderen Antworten.
+        ${t("result.empty")}
         <br><br>
-        <a href="/Quiz.html" style="color:#bb0d13; font-weight:600;">Quiz wiederholen →</a>
+        <a href="/Quiz.html" style="color:#e50914; font-weight:600;">${t("result.retake")} →</a>
       </div>`;
     return;
   }
-
   cards.innerHTML = recs.map(renderCard).join("");
-});
+}
 
 function renderCard(movie, index) {
   const poster = movie.poster_path
     ? `<img class="card-poster" src="${POSTER_BASE}${movie.poster_path}" alt="${escapeHtml(movie.title)} Poster" loading="lazy">`
-    : `<div class="card-poster placeholder">Kein Poster verfügbar</div>`;
+    : `<div class="card-poster placeholder">${t("result.noPoster")}</div>`;
 
   const year = movie.release_date ? new Date(movie.release_date).getFullYear() : null;
   const runtime = movie.runtime ? `${movie.runtime} min` : null;
@@ -88,12 +77,12 @@ function renderCard(movie, index) {
   return `
     <article class="card">
       <span class="card-rank">#${index + 1}</span>
-      <span class="card-score">Match ${movie.score?.toFixed?.(2) ?? movie.score}</span>
+      <span class="card-score">${t("result.match")} ${movie.score?.toFixed?.(2) ?? movie.score}</span>
       ${poster}
       <div class="card-body">
-        <h2 class="card-title">${escapeHtml(movie.title || "Ohne Titel")}</h2>
+        <h2 class="card-title">${escapeHtml(movie.title || t("result.noTitle"))}</h2>
         <p class="card-meta">${meta}</p>
-        <p class="card-overview">${escapeHtml(movie.overview || "Keine Beschreibung verfügbar.")}</p>
+        <p class="card-overview">${escapeHtml(movie.overview || t("result.noOverview"))}</p>
         <div class="card-genres">${genres}</div>
       </div>
     </article>
@@ -107,12 +96,13 @@ function formatGenre(name) {
 
 function formatPrefs(prefs) {
   if (!prefs) return "";
-  const parts = [
-    PROVIDER_LABELS[prefs.provider],
-    RUNTIME_LABELS[prefs.runtime],
-    TYPE_LABELS[prefs.type],
-    AUDIENCE_LABELS[prefs.audience]
-  ].filter(Boolean);
+  const parts = ["provider", "runtime", "type", "audience"]
+    .map(field => {
+      const value = prefs[field];
+      const key = PREF_KEYS[field][value];
+      return key ? t(key) : null;
+    })
+    .filter(Boolean);
   return parts.length ? `• ${parts.join(" • ")}` : "";
 }
 

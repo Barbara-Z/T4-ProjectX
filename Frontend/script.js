@@ -2,6 +2,7 @@
 let currentUser = null;
 const WEB_BASE = "http://localhost:3001";
 const API_BASE = "http://localhost:3001";
+const t = (key, fb) => (window.I18n ? window.I18n.t(key, fb) : fb || key);
 
 async function loadUserSession() {
   try {
@@ -23,8 +24,8 @@ function updateUserArea(user) {
     // Benutzer nicht angemeldet - Login/Register Links anzeigen
     area.innerHTML = `
       <div class="auth-links">
-        <a href="${WEB_BASE}/Login.html" class="login-link">Anmelden</a>
-        <a href="${WEB_BASE}/Register.html" class="register-link">Registrieren</a>
+        <a href="${WEB_BASE}/Login.html" class="login-link">${t("header.login")}</a>
+        <a href="${WEB_BASE}/Register.html" class="register-link">${t("header.register")}</a>
       </div>
     `;
   } else {
@@ -49,12 +50,12 @@ function updateUserArea(user) {
         </div>
         <a href="${WEB_BASE}/Profil.html" class="dropdown-menu-item profile">
           <span>👤</span>
-          <span>Profil anzeigen</span>
+          <span>${t("header.profile")}</span>
         </a>
         <div class="dropdown-separator"></div>
         <a href="#" class="dropdown-menu-item logout" onclick="handleLogout(event)">
           <span>🚪</span>
-          <span>Logout</span>
+          <span>${t("header.logout")}</span>
         </a>
       </div>
     `;
@@ -164,6 +165,9 @@ function closeMovieModal() {
 
 // Session beim Laden der Seite abrufen
 loadUserSession();
+
+// Bei Sprachwechsel die User-Area neu rendern, damit Login/Profil/Logout-Labels mitziehen
+document.addEventListener("languagechange", () => updateUserArea(currentUser));
 
 // Trend-Filme laden und anzeigen
 async function loadTrendingMovies() {

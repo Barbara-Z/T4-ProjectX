@@ -170,26 +170,26 @@
 </head>
 
 <body>
-  <a href="http://localhost:3001/CineMatch.html" class="back-link">← Zurück</a>
+  <a href="http://localhost:3001/CineMatch.html" class="back-link" data-i18n="header.backHome">← Zurück</a>
+  <div class="lang-toggle-wrap"><div class="lang-toggle" id="langToggle" role="group" aria-label="Language"></div></div>
   <div class="login-container">
     <div class="login-header">
-      <h1>Login</h1>
-      <p>Melden Sie sich bei CineMatch an</p>
+      <h1 data-i18n="auth.loginTitle">Login</h1>
     </div>
     <form id="loginForm">
       <div class="form-group">
-        <label for="email">E-Mail-Adresse</label>
-        <input type="email" id="email" name="email" placeholder="Ihre E-Mail" required>
+        <label for="email" data-i18n="auth.email">E-Mail-Adresse</label>
+        <input type="email" id="email" name="email" data-i18n-placeholder="auth.email" placeholder="Ihre E-Mail" required>
       </div>
       <div class="form-group">
-        <label for="password">Passwort</label>
-        <input type="password" id="password" name="password" placeholder="Ihr Passwort" required>
+        <label for="password" data-i18n="auth.password">Passwort</label>
+        <input type="password" id="password" name="password" data-i18n-placeholder="auth.password" placeholder="Ihr Passwort" required>
       </div>
       <div id="errorMessage" class="error-message"></div>
-      <button type="submit" class="login-btn">Anmelden</button>
+      <button type="submit" class="login-btn" data-i18n="auth.loginBtn">Anmelden</button>
     </form>
-    <div class="register-link"> Sie haben noch kein Konto? <a href="http://localhost:3001/Register.html">Jetzt
-        registrieren</a>
+    <div class="register-link"> <span data-i18n="auth.noAccount">Sie haben noch kein Konto?</span>
+      <a href="http://localhost:3001/Register.html" data-i18n="auth.toRegister">Jetzt registrieren</a>
     </div>
   </div>
   <script>
