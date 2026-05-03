@@ -135,7 +135,13 @@ async function openMovieModal(movie) {
     document.getElementById('modalDirector').textContent = details.director || 'Unbekannt';
     document.getElementById('modalWriter').textContent = details.writers || 'Unbekannt';
     document.getElementById('modalVoteCount').textContent = `${details.vote_count}`;
-    document.getElementById('modalOverview').textContent = details.overview || 'Keine Beschreibung verfügbar';
+    
+    // Wähle Beschreibung basierend auf aktiver Sprache
+    const currentLang = window.I18n?.current || localStorage.getItem("cinematch.lang") || "de";
+    const overviewText = currentLang === "en" 
+      ? (details.overview_en || details.overview || 'No description available')
+      : (details.overview || details.overview_en || 'Keine Beschreibung verfügbar');
+    document.getElementById('modalOverview').textContent = overviewText;
     
     // Poster-Bild setzen
     const posterUrl = `https://image.tmdb.org/t/p/w500${details.poster_path}`;
