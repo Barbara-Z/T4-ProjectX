@@ -22,8 +22,10 @@ async function getPopularMovies() {
 }
 
 // Trend-Filme der letzten Woche von TMDB abrufen
-async function getTrendingMovies() {
-  const response = await tmdb.get("/trending/movie/week"); // API-Aufruf zu TMDB
+async function getTrendingMovies(language = 'de-DE') {
+  const response = await tmdb.get("/trending/movie/week", {
+    params: { language }
+  }); // API-Aufruf zu TMDB
   return response.data; // Rückgabe der Filmdaten (Array mit Filmen)
 }
 
@@ -53,6 +55,37 @@ const genreMapTMDB = {
 const genreNameById = Object.fromEntries(
   Object.entries(genreMapTMDB).map(([name, id]) => [id, name])
 );
+
+// Genre-Übersetzungen: Deutsch -> Englisch für TMDB-Genre-Namen
+const genreTranslationsDeToEn = {
+  Action: 'Action',
+  Abenteuer: 'Adventure',
+  Animation: 'Animation',
+  Komödie: 'Comedy',
+  Krimi: 'Crime',
+  Dokumentation: 'Documentary',
+  Drama: 'Drama',
+  Familie: 'Family',
+  Fantasy: 'Fantasy',
+  Historie: 'History',
+  Horror: 'Horror',
+  Musik: 'Music',
+  Mystery: 'Mystery',
+  Romanze: 'Romance',
+  'Science Fiction': 'Science Fiction',
+  Thriller: 'Thriller',
+  Krieg: 'War',
+  Western: 'Western',
+  'TV-Film': 'TV Movie',
+  Mystery: 'Mystery'
+};
+
+function translateGenresToEnglish(genres) {
+  if (!Array.isArray(genres)) return undefined;
+  return genres
+    .map(g => genreTranslationsDeToEn[g.name] || g.name)
+    .join(', ');
+}
 
 // Filme nach Genres abrufen (Legacy-Variante, weiterhin von /api/quiz-result genutzt)
 async function getMoviesByGenres(genres) {
@@ -109,12 +142,10 @@ async function getMovieDetails(movieId) {
     const creditsResponse = await tmdb.get(`/movie/${movieId}/credits`);
     const credits = creditsResponse.data;
 
-    // Englische Beschreibung auch abrufen (falls die deutsche nicht vorhanden ist)
-    let englishOverview = details.overview;
-    if (!details.overview || details.overview.length < 20) {
-      const engResponse = await tmdb.get(`/movie/${movieId}?language=en-US`);
-      englishOverview = engResponse.data.overview;
-    }
+    // Englische Details auch abrufen, damit wir bei EN Sprache Genre-Namen und Overview korrekt anzeigen können
+    const engResponse = await tmdb.get(`/movie/${movieId}?language=en-US`);
+    const englishDetails = engResponse.data;
+    const englishOverview = englishDetails.overview || details.overview;
 
     // Director (Regisseur) extrahieren
     const director = credits.crew?.find(member => member.job === 'Director')?.name || 'Unbekannt';
@@ -127,6 +158,7 @@ async function getMovieDetails(movieId) {
 
     // Genres als String
     const genres = details.genres?.map(g => g.name).join(', ') || 'Unbekannt';
+    const englishGenres = englishDetails.genres?.map(g => g.name).join(', ') || translateGenresToEnglish(details.genres) || genres;
 
     // Runtime in Stunden und Minuten formatieren
     const hours = Math.floor(details.runtime / 60);
@@ -137,9 +169,12 @@ async function getMovieDetails(movieId) {
     const releaseDate = new Date(details.release_date);
     const releaseDateFormatted = isNaN(releaseDate) ? 'Unbekannt' : releaseDate.toLocaleDateString('at-AT');
 
+    const genresEn = englishGenres;
+
     return {
       id: details.id,
       title: details.title,
+      title_en: englishDetails.title || details.title,
       overview: details.overview || englishOverview,
       overview_en: englishOverview,
       poster_path: details.poster_path,
@@ -153,6 +188,7 @@ async function getMovieDetails(movieId) {
       director: director,
       writers: writers,
       genres: genres,
+      genres_en: genresEn,
       director_object: credits.crew?.find(member => member.job === 'Director'),
       writers_objects: credits.crew?.filter(member => member.job === 'Writer' || member.job === 'Screenplay') || []
     };

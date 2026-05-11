@@ -141,8 +141,9 @@ app.get("/test", (req, res) => {
 app.get("/api/trending-movies", async (req, res) => {
   console.log("API Endpoint /api/trending-movies wurde aufgerufen");
   try {
+    const requestedLang = req.query.lang === 'en' ? 'en-US' : 'de-DE';
     // TMDB-Daten über tmdbService abrufen
-    const data = await getTrendingMovies();
+    const data = await getTrendingMovies(requestedLang);
     console.log("TMDB Response erfolgreich:", data.results?.length || 0, "Filme");
     // Filmdaten als JSON an Frontend zurückschicken
     res.json(data);

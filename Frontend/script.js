@@ -1,8 +1,45 @@
-// User-Session laden und User Area aktualisieren
-let currentUser = null;
+// Funktion zum Aktualisieren der sprachabhängigen Modal-Inhalte
+function updateModalLanguage(details) {
+  if (!details) return; // Keine Details vorhanden
+  
+  const currentLang = localStorage.getItem("cinematch.lang") || "de";
+  
+  const genresText = currentLang === "en"
+    ? (details.genres_en || details.genres || 'Unknown')
+    : (details.genres || details.genres_en || 'Unbekannt');
+
+  const titleText = currentLang === "en"
+    ? (details.title_en || details.title || details.name || 'Untitled')
+    : (details.title || details.name || 'Unbenannt');
+  document.getElementById('modalTitle').textContent = titleText;
+  document.getElementById('modalGenres').textContent = genresText;
+  const poster = document.getElementById('modalPoster');
+  if (poster) poster.alt = titleText;
+  
+  // Wähle Beschreibung basierend auf aktiver Sprache
+  const overviewText = currentLang === "en"
+    ? (details.overview_en || details.overview || 'No description available')
+    : (details.overview || details.overview_en || 'Keine Beschreibung verfügbar');
+  document.getElementById('modalOverview').textContent = overviewText;
+}
+
 const WEB_BASE = "http://localhost:3001";
 const API_BASE = "http://localhost:3001";
+let currentUser = null;
 const t = (key, fb) => (window.I18n ? window.I18n.t(key, fb) : fb || key);
+
+// Event Listener für Sprachänderungen
+document.addEventListener('languagechange', (event) => {
+  // Wenn Modal offen ist, Sprache der Inhalte aktualisieren
+  const modal = document.getElementById('movieModal');
+  if (modal && modal.classList.contains('show')) {
+    // Details aus dem Modal lesen (werden als data-attribute gespeichert)
+    const details = modal.dataset.movieDetails ? JSON.parse(modal.dataset.movieDetails) : null;
+    if (details) {
+      updateModalLanguage(details);
+    }
+  }
+});
 
 async function loadUserSession() {
   try {
@@ -126,19 +163,33 @@ async function openMovieModal(movie) {
     const details = await response.json();
     console.log('Film-Details geladen:', details);
     
+    // Sprache direkt aus localStorage lesen (zuverlässiger als window.I18n.current)
+    const currentLang = localStorage.getItem("cinematch.lang") || "de";
+    const titleText = currentLang === "en"
+      ? (details.title_en || details.title || details.name || 'Untitled')
+      : (details.title || details.name || 'Unbenannt');
+    
     // Film-Daten in Modal einfügen
-    document.getElementById('modalTitle').textContent = details.title;
+    document.getElementById('modalTitle').textContent = titleText;
     document.getElementById('modalRating').textContent = details.vote_average.toFixed(1);
     document.getElementById('modalReleaseDate').textContent = details.release_date_formatted || 'Unbekannt';
     document.getElementById('modalRuntime').textContent = details.runtime_formatted || 'Unbekannt';
-    document.getElementById('modalGenres').textContent = details.genres || 'Unbekannt';
+    
+    // Details im Modal speichern für Sprachwechsel
+    const modal = document.getElementById('movieModal');
+    modal.dataset.movieDetails = JSON.stringify(details);
+    
+    const genresText = currentLang === "en"
+      ? (details.genres_en || details.genres || 'Unknown')
+      : (details.genres || details.genres_en || 'Unbekannt');
+
+    document.getElementById('modalGenres').textContent = genresText;
     document.getElementById('modalDirector').textContent = details.director || 'Unbekannt';
     document.getElementById('modalWriter').textContent = details.writers || 'Unbekannt';
     document.getElementById('modalVoteCount').textContent = `${details.vote_count}`;
     
     // Wähle Beschreibung basierend auf aktiver Sprache
-    const currentLang = window.I18n?.current || localStorage.getItem("cinematch.lang") || "de";
-    const overviewText = currentLang === "en" 
+    const overviewText = currentLang === "en"
       ? (details.overview_en || details.overview || 'No description available')
       : (details.overview || details.overview_en || 'Keine Beschreibung verfügbar');
     document.getElementById('modalOverview').textContent = overviewText;
@@ -146,10 +197,9 @@ async function openMovieModal(movie) {
     // Poster-Bild setzen
     const posterUrl = `https://image.tmdb.org/t/p/w500${details.poster_path}`;
     document.getElementById('modalPoster').src = posterUrl;
-    document.getElementById('modalPoster').alt = details.title;
+    document.getElementById('modalPoster').alt = titleText;
     
     // Modal anzeigen
-    const modal = document.getElementById('movieModal');
     modal.classList.add('show');
     
     // Body scrollen verhindern wenn Modal offen ist
@@ -173,14 +223,18 @@ function closeMovieModal() {
 loadUserSession();
 
 // Bei Sprachwechsel die User-Area neu rendern, damit Login/Profil/Logout-Labels mitziehen
-document.addEventListener("languagechange", () => updateUserArea(currentUser));
+document.addEventListener("languagechange", () => {
+  updateUserArea(currentUser);
+  loadTrendingMovies();
+});
 
 // Trend-Filme laden und anzeigen
 async function loadTrendingMovies() {
   console.log("loadTrendingMovies() gestartet");
   try {
     // API-Request zu Backend
-    const apiUrl = `${API_BASE}/api/trending-movies`;
+    const currentLang = localStorage.getItem("cinematch.lang") || "de";
+    const apiUrl = `${API_BASE}/api/trending-movies?lang=${currentLang}`;
     console.log("Fetching:", apiUrl);
     const response = await fetch(apiUrl);
     console.log("Response Status:", response.status, response.ok);
@@ -202,7 +256,7 @@ async function loadTrendingMovies() {
     
     // Filme auf Seite rendern
     console.log("Calling displayMovies with", data.results.length, "movies");
-    displayMovies(data.results, "trendingCarousel");
+    displayMovies(data.results, "trendingCarousel", currentLang);
   } catch (error) {
     console.error("Error loading trending movies:", error);
     const carousel = document.getElementById("trendingCarousel");
@@ -214,7 +268,7 @@ async function loadTrendingMovies() {
 }
 
 // Filme in HTML-Karten umwandeln und auf Seite anzeigen
-function displayMovies(movies, containerId) {
+function displayMovies(movies, containerId, lang) {
   const container = document.getElementById(containerId);
   container.innerHTML = ''; // Container leeren
 
@@ -235,10 +289,14 @@ function displayMovies(movies, containerId) {
     movieCard.style.backgroundImage = `url('${posterUrl}')`;
     addedMovies++;
     
+    const titleText = lang === "en"
+      ? (movie.title_en || movie.title || movie.name)
+      : (movie.title || movie.name);
+    
     // Titel und Rating als HTML Content
     movieCard.innerHTML = `
       <div class="movie-card-info">
-        <div class="movie-card-title">${movie.title || movie.name}</div>
+        <div class="movie-card-title">${titleText}</div>
         <div class="movie-card-rating">⭐ ${movie.vote_average.toFixed(1)}</div>
       </div>
     `;
