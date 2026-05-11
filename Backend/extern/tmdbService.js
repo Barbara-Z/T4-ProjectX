@@ -110,17 +110,21 @@ async function discoverMovies(params = {}, pages = 2) {
 
 // Vor dem Ranking brauchen wir runtime + saubere genre_ids für jeden Film.
 // Discover liefert genre_ids und (manchmal) origin_country, aber keine runtime.
+// Auch englische Details für die Internationalisierung.
 async function enrichMovieForRanking(movie) {
-  if (typeof movie.runtime === "number") return movie;
+  if (typeof movie.runtime === "number" && movie.title_en) return movie;
   try {
     const detail = await tmdb.get(`/movie/${movie.id}`, { params: { language: "de-DE" } });
+    const englishDetail = await tmdb.get(`/movie/${movie.id}`, { params: { language: "en-US" } });
     return {
       ...movie,
       runtime: detail.data.runtime,
       genre_ids: movie.genre_ids?.length
         ? movie.genre_ids
         : (detail.data.genres || []).map(g => g.id),
-      origin_country: detail.data.origin_country || movie.origin_country || []
+      origin_country: detail.data.origin_country || movie.origin_country || [],
+      title_en: englishDetail.data.title,
+      overview_en: englishDetail.data.overview
     };
   } catch (err) {
     return movie;

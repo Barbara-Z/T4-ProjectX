@@ -381,7 +381,9 @@ app.post("/api/quiz-result", async (req, res) => {
     const recommendations = top3.map(m => ({
       id: m.id,
       title: m.title,
+      title_en: m.title_en || m.title,
       overview: m.overview,
+      overview_en: m.overview_en || m.overview,
       poster_path: m.poster_path,
       backdrop_path: m.backdrop_path,
       vote_average: m.vote_average,
