@@ -22,38 +22,117 @@ async function getPopularMovies() {
 }
 
 // Trend-Filme der letzten Woche von TMDB abrufen
-async function getTrendingMovies() {
-  const response = await tmdb.get("/trending/movie/week"); // API-Aufruf zu TMDB
+async function getTrendingMovies(language = 'de-DE') {
+  const response = await tmdb.get("/trending/movie/week", {
+    params: { language }
+  }); // API-Aufruf zu TMDB
   return response.data; // Rückgabe der Filmdaten (Array mit Filmen)
 }
 
-// Filme nach Genres abrufen (z.B. Action, Comedy, etc.)
+// Genre-Map: Genre-Name (wie in quizData verwendet) -> TMDB-ID
+const genreMapTMDB = {
+  action: 28,
+  adventure: 12,
+  animation: 16,
+  comedy: 35,
+  crime: 80,
+  documentary: 99,
+  drama: 18,
+  family: 10751,
+  fantasy: 14,
+  history: 36,
+  horror: 27,
+  music: 10402,
+  mystery: 9648,
+  romance: 10749,
+  science_fiction: 878,
+  thriller: 53,
+  war: 10752,
+  western: 37
+};
+
+// Reverse-Map für Display-Zwecke (TMDB-ID -> Genre-Name)
+const genreNameById = Object.fromEntries(
+  Object.entries(genreMapTMDB).map(([name, id]) => [id, name])
+);
+
+// Genre-Übersetzungen: Deutsch -> Englisch für TMDB-Genre-Namen
+const genreTranslationsDeToEn = {
+  Action: 'Action',
+  Abenteuer: 'Adventure',
+  Animation: 'Animation',
+  Komödie: 'Comedy',
+  Krimi: 'Crime',
+  Dokumentation: 'Documentary',
+  Drama: 'Drama',
+  Familie: 'Family',
+  Fantasy: 'Fantasy',
+  Historie: 'History',
+  Horror: 'Horror',
+  Musik: 'Music',
+  Mystery: 'Mystery',
+  Romanze: 'Romance',
+  'Science Fiction': 'Science Fiction',
+  Thriller: 'Thriller',
+  Krieg: 'War',
+  Western: 'Western',
+  'TV-Film': 'TV Movie',
+  Mystery: 'Mystery'
+};
+
+function translateGenresToEnglish(genres) {
+  if (!Array.isArray(genres)) return undefined;
+  return genres
+    .map(g => genreTranslationsDeToEn[g.name] || g.name)
+    .join(', ');
+}
+
+// Filme nach Genres abrufen (Legacy-Variante, weiterhin von /api/quiz-result genutzt)
 async function getMoviesByGenres(genres) {
-    const genreMap = {
-        action: 28,
-        adventure: 12,
-        animation: 16,
-        comedy: 35,
-        crime: 80,
-        documentary: 99,
-        drama: 18,
-        family: 10751,
-        fantasy: 14,
-        history: 36,
-        horror: 27,
-        music: 10402,
-        mystery: 9648,
-        romance: 10749,
-        science_fiction: 878,
-        thriller: 53,
-        war: 10752,
-        western: 37
+  const genreIds = genres.map(g => genreMapTMDB[g]).filter(Boolean).join(",");
+  const response = await tmdb.get(`/discover/movie?with_genres=${genreIds}`);
+  return response.data;
+}
+
+// Generischer Discover-Aufruf mit beliebigen Query-Parametern (Filter-Engine baut sie).
+// Holt mehrere Seiten, damit das Ranking eine gute Auswahl hat.
+async function discoverMovies(params = {}, pages = 2) {
+  const all = [];
+  for (let page = 1; page <= pages; page++) {
+    const response = await tmdb.get("/discover/movie", { params: { ...params, page } });
+    if (response.data && Array.isArray(response.data.results)) {
+      all.push(...response.data.results);
+    }
+    if (!response.data || page >= (response.data.total_pages || 1)) break;
+  }
+  return all;
+}
+
+// Vor dem Ranking brauchen wir runtime + saubere genre_ids für jeden Film.
+// Discover liefert genre_ids und (manchmal) origin_country, aber keine runtime.
+// Auch englische Details für die Internationalisierung.
+async function enrichMovieForRanking(movie) {
+  if (typeof movie.runtime === "number" && movie.title_en) return movie;
+  try {
+    const detail = await tmdb.get(`/movie/${movie.id}`, { params: { language: "de-DE" } });
+    const englishDetail = await tmdb.get(`/movie/${movie.id}`, { params: { language: "en-US" } });
+    return {
+      ...movie,
+      runtime: detail.data.runtime,
+      genre_ids: movie.genre_ids?.length
+        ? movie.genre_ids
+        : (detail.data.genres || []).map(g => g.id),
+      origin_country: detail.data.origin_country || movie.origin_country || [],
+      title_en: englishDetail.data.title,
+      overview_en: englishDetail.data.overview
     };
+  } catch (err) {
+    return movie;
+  }
+}
 
-    const genreIds = genres.map(g => genreMap[g]).join(","); // Genre-Namen in IDs umwandeln und als String für API-Aufruf formatieren
-
-    const response = await tmdb.get(`/discover/movie?with_genres=${genreIds}`);
-    return response.data; // API-Aufruf zu TMDB mit Genre-Filter
+async function enrichMovies(movies) {
+  return Promise.all(movies.map(enrichMovieForRanking));
 }
 
 // Film-Details abrufen (mit deutscher Übersetzung, Credits, Runtime, etc.)
@@ -67,12 +146,10 @@ async function getMovieDetails(movieId) {
     const creditsResponse = await tmdb.get(`/movie/${movieId}/credits`);
     const credits = creditsResponse.data;
 
-    // Englische Beschreibung auch abrufen (falls die deutsche nicht vorhanden ist)
-    let englishOverview = details.overview;
-    if (!details.overview || details.overview.length < 20) {
-      const engResponse = await tmdb.get(`/movie/${movieId}?language=en-US`);
-      englishOverview = engResponse.data.overview;
-    }
+    // Englische Details auch abrufen, damit wir bei EN Sprache Genre-Namen und Overview korrekt anzeigen können
+    const engResponse = await tmdb.get(`/movie/${movieId}?language=en-US`);
+    const englishDetails = engResponse.data;
+    const englishOverview = englishDetails.overview || details.overview;
 
     // Director (Regisseur) extrahieren
     const director = credits.crew?.find(member => member.job === 'Director')?.name || 'Unbekannt';
@@ -85,6 +162,7 @@ async function getMovieDetails(movieId) {
 
     // Genres als String
     const genres = details.genres?.map(g => g.name).join(', ') || 'Unbekannt';
+    const englishGenres = englishDetails.genres?.map(g => g.name).join(', ') || translateGenresToEnglish(details.genres) || genres;
 
     // Runtime in Stunden und Minuten formatieren
     const hours = Math.floor(details.runtime / 60);
@@ -95,9 +173,12 @@ async function getMovieDetails(movieId) {
     const releaseDate = new Date(details.release_date);
     const releaseDateFormatted = isNaN(releaseDate) ? 'Unbekannt' : releaseDate.toLocaleDateString('at-AT');
 
+    const genresEn = englishGenres;
+
     return {
       id: details.id,
       title: details.title,
+      title_en: englishDetails.title || details.title,
       overview: details.overview || englishOverview,
       overview_en: englishOverview,
       poster_path: details.poster_path,
@@ -111,6 +192,7 @@ async function getMovieDetails(movieId) {
       director: director,
       writers: writers,
       genres: genres,
+      genres_en: genresEn,
       director_object: credits.crew?.find(member => member.job === 'Director'),
       writers_objects: credits.crew?.filter(member => member.job === 'Writer' || member.job === 'Screenplay') || []
     };
@@ -121,4 +203,13 @@ async function getMovieDetails(movieId) {
 }
 // Ende Modal Film-Details Funktion
 
-module.exports = { getPopularMovies, getTrendingMovies, getMoviesByGenres, getMovieDetails };
+module.exports = {
+  getPopularMovies,
+  getTrendingMovies,
+  getMoviesByGenres,
+  getMovieDetails,
+  discoverMovies,
+  enrichMovies,
+  genreMapTMDB,
+  genreNameById
+};
