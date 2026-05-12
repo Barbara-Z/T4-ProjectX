@@ -4,6 +4,12 @@ const WEB_BASE = "http://localhost:3001";
 const API_BASE = "http://localhost:3001";
 const t = (key, fb) => (window.I18n ? window.I18n.t(key, fb) : fb || key);
 
+// Promise, das aufgelöst wird sobald loadUserSession() einmal durchgelaufen ist.
+// Wir nutzen das in der Suche, damit das History-Dropdown beim Fokus auf das
+// leere Feld nicht "blind" rendert, bevor wir wissen, wer eingeloggt ist.
+let _resolveSessionReady;
+const sessionReady = new Promise(res => { _resolveSessionReady = res; });
+
 async function loadUserSession() {
   try {
     const response = await fetch(`${API_BASE}/session`, { credentials: "include" });
@@ -14,6 +20,22 @@ async function loadUserSession() {
     console.error("Fehler beim Laden der Session:", error);
     currentUser = null;
     updateUserArea(null);
+  } finally {
+    if (typeof invalidateQueryHistoryCache === "function") {
+      invalidateQueryHistoryCache();
+    }
+    if (_resolveSessionReady) {
+      _resolveSessionReady(currentUser);
+      _resolveSessionReady = null;
+    }
+    // Falls das Suchfeld schon fokussiert ist und leer ist, History
+    // nachträglich rendern (Race-Condition zwischen Focus und Session-Load).
+    const input = document.getElementById("searchInput");
+    if (input && document.activeElement === input && input.value.trim().length === 0) {
+      if (typeof getQueryHistory === "function" && typeof renderDropdown === "function") {
+        getQueryHistory().then(history => renderDropdown({ history }));
+      }
+    }
   }
 }
 
@@ -208,14 +230,23 @@ if (document.getElementById("trendingCarousel")) {
 }
 
 // ============================================================
-// SUCHE: Live-Autocomplete + Suchverlauf
+// SUCHE: Live-Autocomplete + Suchanfragen-Historie (textbasiert)
 // ============================================================
+//
+// Datenmodell für `searchCurrentItems` (Tastaturnavigation + Klicks):
+//   { kind: "history", id: <int>, query: <string> }
+//   { kind: "movie",   id: <int>, title, poster_path, release_date, vote_average }
 
 const SEARCH_DEBOUNCE_MS = 220;
 let searchDebounceTimer = null;
 let searchAbortController = null;
 let searchActiveIndex = -1;
-let searchCurrentItems = []; // {id, title, poster_path} für Tastaturnavigation
+let searchCurrentItems = [];
+
+// Cache für die Query-Historie, damit wir nicht bei jedem Tastendruck neu fetchen.
+// Wird beim Speichern/Löschen invalidiert.
+let queryHistoryCache = null;
+let queryHistoryPromise = null;
 
 function escapeHtml(str) {
   return String(str ?? "")
@@ -229,93 +260,90 @@ function posterThumb(path) {
     : "https://via.placeholder.com/40x60/2a2a2a/666?text=%3F";
 }
 
-// Vorschläge im Dropdown rendern (Autocomplete-Treffer)
-function renderSearchSuggestions(items) {
-  const dropdown = document.getElementById("searchDropdown");
-  searchCurrentItems = items;
-  searchActiveIndex = -1;
+// ---------- Query-Historie: Backend-Kommunikation ----------
 
-  if (!items.length) {
-    dropdown.innerHTML = `<div class="search-empty">${t("search.noResults", "Keine Ergebnisse gefunden")}</div>`;
-    dropdown.hidden = false;
-    return;
-  }
-
-  const html = items.map((m, i) => {
-    const year = (m.release_date || "").slice(0, 4);
-    const rating = m.vote_average ? `⭐ ${m.vote_average.toFixed(1)}` : "";
-    const meta = [year, rating].filter(Boolean).join(" · ");
-    return `
-      <div class="search-suggestion" data-index="${i}" data-id="${m.id}">
-        <img src="${posterThumb(m.poster_path)}" alt="">
-        <div class="search-suggestion-info">
-          <div class="search-suggestion-title">${escapeHtml(m.title)}</div>
-          <div class="search-suggestion-meta">${meta}</div>
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  dropdown.innerHTML = html;
-  dropdown.hidden = false;
-
-  dropdown.querySelectorAll(".search-suggestion").forEach(el => {
-    el.addEventListener("click", () => {
-      const i = parseInt(el.dataset.index, 10);
-      handleSuggestionPick(searchCurrentItems[i]);
-    });
-  });
+function invalidateQueryHistoryCache() {
+  queryHistoryCache = null;
+  queryHistoryPromise = null;
 }
 
-// Suchverlauf rendern (wenn Input leer & User eingeloggt)
-function renderSearchHistory(history) {
-  const dropdown = document.getElementById("searchDropdown");
-  searchCurrentItems = history;
-  searchActiveIndex = -1;
-
-  if (!history.length) {
-    dropdown.hidden = true;
-    return;
-  }
-
-  const items = history.map((m, i) => `
-    <div class="search-suggestion" data-index="${i}" data-id="${m.movie_id}">
-      <img src="${posterThumb(m.poster_path)}" alt="">
-      <div class="search-suggestion-info">
-        <div class="search-suggestion-title">${escapeHtml(m.title)}</div>
-        <div class="search-suggestion-meta">${t("search.previousSearch", "Zuletzt gesucht")}</div>
-      </div>
-    </div>
-  `).join("");
-
-  dropdown.innerHTML = `
-    <div class="search-dropdown-header">
-      <span>${t("search.history", "Suchverlauf")}</span>
-      <button type="button" class="search-clear-btn" id="searchClearBtn">
-        ${t("search.clear", "Verlauf löschen")}
-      </button>
-    </div>
-    ${items}
-  `;
-  dropdown.hidden = false;
-
-  dropdown.querySelectorAll(".search-suggestion").forEach(el => {
-    el.addEventListener("click", () => {
-      const i = parseInt(el.dataset.index, 10);
-      const entry = searchCurrentItems[i];
-      handleSuggestionPick({
-        id: entry.movie_id,
-        title: entry.title,
-        poster_path: entry.poster_path
-      });
-    });
-  });
-
-  document.getElementById("searchClearBtn")?.addEventListener("click", async (e) => {
-    e.stopPropagation();
-    await clearSearchHistory();
-  });
+async function getQueryHistory() {
+  // Auf die initiale Session-Auflösung warten, damit der erste Fokus auf das
+  // leere Suchfeld nicht "zu früh" mit currentUser=null abbricht.
+  await sessionReady;
+  if (!currentUser) return [];
+  if (queryHistoryCache !== null) return queryHistoryCache;
+  if (queryHistoryPromise) return queryHistoryPromise;
+  queryHistoryPromise = (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/search-queries`, { credentials: "include" });
+      if (!res.ok) return [];
+      const data = await res.json();
+      queryHistoryCache = data.queries || [];
+      return queryHistoryCache;
+    } catch (err) {
+      console.error("Query-Historie laden fehlgeschlagen:", err);
+      return [];
+    } finally {
+      queryHistoryPromise = null;
+    }
+  })();
+  return queryHistoryPromise;
 }
+
+async function saveSearchQuery(query) {
+  // Erst sicherstellen, dass wir wissen, ob/wer eingeloggt ist.
+  await sessionReady;
+  if (!currentUser) return;
+  const q = (query || "").trim();
+  if (!q) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/search-queries`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ query: q })
+    });
+    if (!res.ok) {
+      console.warn("Suchanfrage speichern: HTTP", res.status);
+      return;
+    }
+    invalidateQueryHistoryCache();
+  } catch (err) {
+    console.error("Suchanfrage speichern fehlgeschlagen:", err);
+  }
+}
+
+async function removeQueryHistoryEntry(id) {
+  if (!id) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/search-queries/${id}`, {
+      method: "DELETE",
+      credentials: "include"
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    invalidateQueryHistoryCache();
+    // Dropdown frisch aufbauen (Input-Wert berücksichtigen)
+    refreshDropdownForCurrentInput();
+  } catch (err) {
+    console.error("Eintrag entfernen fehlgeschlagen:", err);
+  }
+}
+
+async function clearQueryHistory() {
+  try {
+    await fetch(`${API_BASE}/api/search-queries`, {
+      method: "DELETE",
+      credentials: "include"
+    });
+    invalidateQueryHistoryCache();
+    refreshDropdownForCurrentInput();
+  } catch (err) {
+    console.error("Verlauf löschen fehlgeschlagen:", err);
+  }
+}
+
+// ---------- Live-Suche: TMDB-Vorschläge ----------
 
 async function fetchSearchSuggestions(query) {
   if (searchAbortController) searchAbortController.abort();
@@ -324,7 +352,7 @@ async function fetchSearchSuggestions(query) {
   spinner.classList.add("active");
 
   try {
-    const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}`, {
+    const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}&limit=6`, {
       signal: searchAbortController.signal
     });
     const data = await res.json();
@@ -338,63 +366,170 @@ async function fetchSearchSuggestions(query) {
   }
 }
 
-async function loadAndShowHistory() {
-  if (!currentUser) {
-    document.getElementById("searchDropdown").hidden = true;
+// Historie nach Tippeingabe filtern (case-insensitive Substring, max. 5 Treffer).
+function filterHistoryByPrefix(history, prefix) {
+  const lower = prefix.toLowerCase();
+  return history
+    .filter(h => h.query.toLowerCase().includes(lower) && h.query.toLowerCase() !== lower)
+    .slice(0, 5);
+}
+
+// ---------- Rendering ----------
+
+// Einheitliches Rendering: oben Historie, darunter Live-Vorschläge.
+function renderDropdown({ history = [], suggestions = [], emptyMessage = null }) {
+  const dropdown = document.getElementById("searchDropdown");
+  if (!dropdown) return;
+
+  if (!history.length && !suggestions.length) {
+    if (emptyMessage) {
+      dropdown.innerHTML = `<div class="search-empty">${escapeHtml(emptyMessage)}</div>`;
+      dropdown.hidden = false;
+    } else {
+      dropdown.hidden = true;
+    }
+    searchCurrentItems = [];
+    searchActiveIndex = -1;
     return;
   }
-  try {
-    const res = await fetch(`${API_BASE}/api/search-history`, { credentials: "include" });
-    if (!res.ok) return;
-    const data = await res.json();
-    renderSearchHistory(data.history || []);
-  } catch (err) {
-    console.error("Suchverlauf-Fehler:", err);
-  }
-}
 
-async function clearSearchHistory() {
-  try {
-    await fetch(`${API_BASE}/api/search-history`, {
-      method: "DELETE",
-      credentials: "include"
+  // Kombinierte Liste für Tastaturnavigation
+  searchCurrentItems = [
+    ...history.map(h => ({ kind: "history", id: h.id, query: h.query })),
+    ...suggestions.map(m => ({
+      kind: "movie",
+      id: m.id,
+      title: m.title,
+      poster_path: m.poster_path,
+      release_date: m.release_date,
+      vote_average: m.vote_average
+    }))
+  ];
+  searchActiveIndex = -1;
+
+  const removeLabel = t("search.removeEntry", "Aus Verlauf entfernen");
+  const clockSvg = `
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9"></circle>
+      <polyline points="12 7 12 12 15 14"></polyline>
+    </svg>`;
+  const closeSvg = `
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+         stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+    </svg>`;
+
+  let html = "";
+
+  if (history.length) {
+    html += `
+      <div class="search-dropdown-header">
+        <span>${t("search.history", "Suchverlauf")}</span>
+      </div>
+    `;
+    history.forEach((h, i) => {
+      html += `
+        <div class="search-suggestion search-suggestion-history" data-index="${i}" data-query-id="${h.id}">
+          <span class="search-suggestion-icon" aria-hidden="true">${clockSvg}</span>
+          <div class="search-suggestion-info">
+            <div class="search-suggestion-title">${escapeHtml(h.query)}</div>
+          </div>
+          <button type="button" class="search-suggestion-remove"
+                  data-query-id="${h.id}"
+                  aria-label="${removeLabel}" title="${removeLabel}">
+            ${closeSvg}
+          </button>
+        </div>
+      `;
     });
-    document.getElementById("searchDropdown").hidden = true;
-  } catch (err) {
-    console.error("Suchverlauf-Löschen fehlgeschlagen:", err);
   }
-}
 
-async function saveToSearchHistory(movie) {
-  if (!currentUser) return;
-  try {
-    await fetch(`${API_BASE}/api/search-history`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        movie_id: movie.id,
-        title: movie.title,
-        poster_path: movie.poster_path || null
-      })
+  if (suggestions.length) {
+    const offset = history.length;
+    suggestions.forEach((m, i) => {
+      const idx = offset + i;
+      const year = (m.release_date || "").slice(0, 4);
+      const rating = m.vote_average ? `⭐ ${m.vote_average.toFixed(1)}` : "";
+      const meta = [year, rating].filter(Boolean).join(" · ");
+      html += `
+        <div class="search-suggestion search-suggestion-movie" data-index="${idx}" data-id="${m.id}">
+          <img src="${posterThumb(m.poster_path)}" alt="">
+          <div class="search-suggestion-info">
+            <div class="search-suggestion-title">${escapeHtml(m.title)}</div>
+            <div class="search-suggestion-meta">${meta}</div>
+          </div>
+        </div>
+      `;
     });
-  } catch (err) {
-    console.error("Verlauf speichern fehlgeschlagen:", err);
+  }
+
+  dropdown.innerHTML = html;
+  dropdown.hidden = false;
+
+  // Click-Handler: für alle Items anhand des Item-Typs in searchCurrentItems
+  dropdown.querySelectorAll(".search-suggestion").forEach(el => {
+    el.addEventListener("click", (e) => {
+      // Klick auf das ✕-Icon nicht als Auswahl werten
+      if (e.target.closest(".search-suggestion-remove")) return;
+      const i = parseInt(el.dataset.index, 10);
+      pickItem(searchCurrentItems[i]);
+    });
+  });
+
+  // ✕-Icon: einzelnen Query-Eintrag entfernen
+  dropdown.querySelectorAll(".search-suggestion-remove").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const id = parseInt(btn.dataset.queryId, 10);
+      await removeQueryHistoryEntry(id);
+    });
+  });
+}
+
+// Dropdown neu aufbauen anhand des aktuellen Input-Werts
+// (z. B. nach Löschen eines History-Eintrags).
+async function refreshDropdownForCurrentInput() {
+  const input = document.getElementById("searchInput");
+  if (!input) return;
+  const query = input.value.trim();
+  if (!query) {
+    const history = await getQueryHistory();
+    renderDropdown({ history });
+  } else {
+    const all = await getQueryHistory();
+    const history = filterHistoryByPrefix(all, query);
+    // Vorschläge nicht neu fetchen, also leer lassen – schneller, und
+    // die ursprünglichen Vorschläge sind nach DOM-Reset weg.
+    renderDropdown({ history });
+    // Frisch laden, damit Vorschläge wieder da sind
+    const suggestions = await fetchSearchSuggestions(query);
+    if (suggestions !== null) {
+      renderDropdown({ history, suggestions });
+    }
   }
 }
 
-// Wird ausgelöst, wenn der User einen Vorschlag oder Verlaufseintrag wählt.
-// Direkter Klick während der Suche -> direkt zur Film-Detailseite.
-function handleSuggestionPick(movie) {
-  if (!movie) return;
+// Klick / Enter auf einen Eintrag im Dropdown
+function pickItem(item) {
+  if (!item) return;
   closeSearchDropdown();
-  document.getElementById("searchInput").value = "";
-  saveToSearchHistory(movie);
-  window.location.href = `Movie.html?id=${encodeURIComponent(movie.id)}`;
+  if (item.kind === "history") {
+    const input = document.getElementById("searchInput");
+    if (input) input.value = item.query;
+    window.location.href = `Search.html?q=${encodeURIComponent(item.query)}`;
+  } else if (item.kind === "movie") {
+    const input = document.getElementById("searchInput");
+    if (input) input.value = "";
+    window.location.href = `Movie.html?id=${encodeURIComponent(item.id)}`;
+  }
 }
 
 function closeSearchDropdown() {
   const dropdown = document.getElementById("searchDropdown");
+  if (!dropdown) return;
   dropdown.hidden = true;
   searchActiveIndex = -1;
   searchCurrentItems = [];
@@ -409,11 +544,19 @@ function highlightActiveSuggestion() {
 }
 
 // Allgemeine Suche: Enter im Input oder Klick auf die Lupe -> Ergebnisseite öffnen.
-function submitGeneralSearch() {
+async function submitGeneralSearch() {
   const input = document.getElementById("searchInput");
   const query = (input?.value || "").trim();
   if (!query) return;
   closeSearchDropdown();
+  // Wichtig: vor der Navigation auf den POST warten (mit Sicherheits-Timeout),
+  // damit die Anfrage nicht durch window.location.href abgebrochen wird.
+  try {
+    await Promise.race([
+      saveSearchQuery(query),
+      new Promise(resolve => setTimeout(resolve, 1200))
+    ]);
+  } catch (_) { /* nicht blockieren */ }
   window.location.href = `Search.html?q=${encodeURIComponent(query)}`;
 }
 
@@ -422,51 +565,62 @@ function initSearch() {
   const form = document.getElementById("searchBar");
   if (!input) return;
 
-  // Form-Submit fängt Enter UND Klick auf den Lupen-Button ab.
   if (form) {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      // Wenn ein Vorschlag aktiv markiert ist, hat das keydown-Handling Vorrang.
-      if (searchActiveIndex >= 0 && searchCurrentItems.length) return;
+      // Wenn ein Eintrag per Tastatur markiert ist: dieser hat Vorrang.
+      if (searchActiveIndex >= 0 && searchCurrentItems.length) {
+        pickItem(searchCurrentItems[searchActiveIndex]);
+        return;
+      }
       submitGeneralSearch();
     });
   }
 
-  input.addEventListener("input", () => {
+  input.addEventListener("input", async () => {
     const query = input.value.trim();
     clearTimeout(searchDebounceTimer);
 
     if (query.length === 0) {
-      // Leeres Feld -> Verlauf zeigen, falls eingeloggt
-      loadAndShowHistory();
+      // Leeres Feld -> reine Historie zeigen
+      const history = await getQueryHistory();
+      renderDropdown({ history });
       return;
     }
 
-    if (query.length < 2) {
-      // Erst ab 2 Zeichen sinnvoll suchen
-      document.getElementById("searchDropdown").hidden = true;
-      return;
-    }
+    // History sofort einblenden (lokal gefiltert), Movie-Vorschläge debounced.
+    const allHistory = await getQueryHistory();
+    const historyMatches = filterHistoryByPrefix(allHistory, query);
+    renderDropdown({ history: historyMatches }); // zwischenzeitlicher Stand
 
     searchDebounceTimer = setTimeout(async () => {
-      const items = await fetchSearchSuggestions(query);
-      if (items === null) return; // abgebrochen
-      renderSearchSuggestions(items);
+      const suggestions = await fetchSearchSuggestions(query);
+      if (suggestions === null) return; // abgebrochen
+      // Historie könnte sich in der Zwischenzeit nicht geändert haben,
+      // aber zur Sicherheit noch einmal frisch ziehen.
+      const latestHistory = await getQueryHistory();
+      const latestMatches = filterHistoryByPrefix(latestHistory, query);
+      renderDropdown({
+        history: latestMatches,
+        suggestions
+      });
     }, SEARCH_DEBOUNCE_MS);
   });
 
-  // Beim Fokussieren mit leerem Feld: Verlauf zeigen
-  input.addEventListener("focus", () => {
-    if (input.value.trim().length === 0) {
-      loadAndShowHistory();
+  input.addEventListener("focus", async () => {
+    const query = input.value.trim();
+    if (query.length === 0) {
+      const history = await getQueryHistory();
+      renderDropdown({ history });
     }
   });
 
-  // Tastaturnavigation: ↑ ↓ Enter Esc
   input.addEventListener("keydown", (e) => {
     const dropdown = document.getElementById("searchDropdown");
     if (dropdown.hidden || !searchCurrentItems.length) {
-      if (e.key === "Enter") e.preventDefault();
+      if (e.key === "Enter") {
+        // Default-Submit-Verhalten greifen lassen
+      }
       return;
     }
     if (e.key === "ArrowDown") {
@@ -477,23 +631,12 @@ function initSearch() {
       e.preventDefault();
       searchActiveIndex = (searchActiveIndex - 1 + searchCurrentItems.length) % searchCurrentItems.length;
       highlightActiveSuggestion();
-    } else if (e.key === "Enter") {
-      if (searchActiveIndex >= 0) {
-        e.preventDefault();
-        const item = searchCurrentItems[searchActiveIndex];
-        // Verlaufs-Einträge haben movie_id, Vorschläge haben id
-        const movie = item.movie_id
-          ? { id: item.movie_id, title: item.title, poster_path: item.poster_path }
-          : item;
-        handleSuggestionPick(movie);
-      }
     } else if (e.key === "Escape") {
       closeSearchDropdown();
       input.blur();
     }
   });
 
-  // Klick außerhalb -> Dropdown schließen
   document.addEventListener("click", (e) => {
     const bar = document.querySelector(".search-bar");
     if (bar && !bar.contains(e.target)) {
@@ -502,7 +645,10 @@ function initSearch() {
   });
 }
 
-// Auf jeder Seite mit Header: Suche initialisieren.
+// Wenn die Session asynchron geladen wird, sind beim ersten initSearch()
+// vielleicht weder currentUser noch History bekannt. Bei "languagechange"
+// (kommt nach Session-Update via updateUserArea nicht, aber bei Sprachwechsel)
+// invalidieren wir den Cache, falls sich der User unterscheidet.
 document.addEventListener("DOMContentLoaded", () => {
   initSearch();
 });

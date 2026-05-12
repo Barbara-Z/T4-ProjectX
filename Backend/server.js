@@ -42,7 +42,7 @@ console.log(
   process.env.TMDB_API_KEY?.startsWith("eyJ")
 );
 
-const { getPopularMovies, getTrendingMovies, getMovieDetails, searchMovies } = require("./extern/tmdbService");
+const { getPopularMovies, getTrendingMovies, getMovieDetails, searchMovies, getMovieMainGenre, discoverByGenre } = require("./extern/tmdbService");
 
 // SQLite Datenbank Initialisierung
 const db = new sqlite3.Database(path.join(__dirname, "users.db"), (err) => {
@@ -85,6 +85,18 @@ const db = new sqlite3.Database(path.join(__dirname, "users.db"), (err) => {
         movie_id INTEGER NOT NULL,
         title TEXT NOT NULL,
         poster_path TEXT,
+        searched_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Suchanfragen-Historie: speichert die eingegebenen Suchbegriffe (Queries)
+    // pro User. Dadurch können wir im Dropdown vergangene Anfragen vorschlagen.
+    db.run(`
+      CREATE TABLE IF NOT EXISTS search_queries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        query TEXT NOT NULL,
         searched_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
@@ -208,6 +220,51 @@ app.get("/api/movie-details/:movieId", async (req, res) => {
 
 // ===== SUCH-ENDPOINTS =====
 
+// Kombi-Endpoint für die Ergebnisseite: direkte Treffer + Hauptgenre des
+// Top-Treffers + ähnliche Filme aus diesem Hauptgenre.
+// GET /api/search-with-similar?q=Harry+Potter&lang=de
+app.get("/api/search-with-similar", async (req, res) => {
+  const query = (req.query.q || "").toString().trim();
+  const lang = (req.query.lang || "de").toString() === "en" ? "en-US" : "de-DE";
+  if (!query) return res.json({ query: "", results: [], similar: null });
+
+  try {
+    // 1. Direkte Treffer
+    const results = await searchMovies(query, 40);
+    if (!results.length) {
+      return res.json({ query, results: [], similar: null });
+    }
+
+    // 2. Hauptgenre des Top-Treffers ermitteln
+    const top = results[0];
+    const mainGenre = await getMovieMainGenre(top.id, lang); // { id, name } | null
+    if (!mainGenre) {
+      return res.json({ query, results, similar: null });
+    }
+
+    // 3. Ähnliche Filme aus diesem Hauptgenre (Discover, popularity.desc)
+    const similarRaw = await discoverByGenre(mainGenre.id, lang, 24);
+
+    // Direkte Treffer ausfiltern (damit der Film, den der User gesucht hat,
+    // nicht zweimal auftaucht).
+    const directIds = new Set(results.map(r => r.id));
+    const similar = similarRaw.filter(m => !directIds.has(m.id)).slice(0, 20);
+
+    res.json({
+      query,
+      results,
+      similar: {
+        genre_id: mainGenre.id,
+        genre_name: mainGenre.name,
+        movies: similar
+      }
+    });
+  } catch (err) {
+    console.error("search-with-similar fehlgeschlagen:", err.message);
+    res.status(500).json({ error: "Suche fehlgeschlagen" });
+  }
+});
+
 // Live-Autocomplete: liefert kompakte Treffer für die Dropdown-Vorschläge.
 // GET /api/search?q=har
 app.get("/api/search", async (req, res) => {
@@ -277,6 +334,106 @@ app.delete("/api/search-history", requireAuth, (req, res) => {
     if (err) return res.status(500).json({ error: "Löschen fehlgeschlagen" });
     res.json({ success: true });
   });
+});
+
+// Einzelnen Eintrag aus dem Suchverlauf entfernen (YouTube-Style Hover-Delete).
+// Wir entfernen alle Treffer mit derselben movie_id, da das GET-Endpoint
+// per GROUP BY movie_id ohnehin nur einen sichtbaren Eintrag pro Film liefert.
+app.delete("/api/search-history/:movieId", requireAuth, (req, res) => {
+  const movieId = parseInt(req.params.movieId, 10);
+  if (!movieId) return res.status(400).json({ error: "Ungültige Film-ID" });
+  db.run(
+    `DELETE FROM search_history WHERE user_id = ? AND movie_id = ?`,
+    [req.session.user.id, movieId],
+    (err) => {
+      if (err) {
+        console.error("Verlaufseintrag löschen fehlgeschlagen:", err);
+        return res.status(500).json({ error: "Löschen fehlgeschlagen" });
+      }
+      res.json({ success: true });
+    }
+  );
+});
+
+// ===== SUCHANFRAGEN-HISTORIE (textbasiert, pro User) =====
+
+// Letzte Anfragen abrufen (max. 10, neueste zuerst).
+app.get("/api/search-queries", requireAuth, (req, res) => {
+  db.all(
+    `SELECT id, query, searched_at
+       FROM search_queries
+      WHERE user_id = ?
+      ORDER BY searched_at DESC
+      LIMIT 10`,
+    [req.session.user.id],
+    (err, rows) => {
+      if (err) {
+        console.error("Query-Historie laden fehlgeschlagen:", err);
+        return res.status(500).json({ error: "Verlauf konnte nicht geladen werden" });
+      }
+      res.json({ queries: rows || [] });
+    }
+  );
+});
+
+// Neue Anfrage speichern. Vorhandene gleiche Anfrage (case-insensitive)
+// wird erst gelöscht, damit Wiederholungen an die Spitze rutschen.
+app.post("/api/search-queries", requireAuth, (req, res) => {
+  const userId = req.session.user.id;
+  const query = (req.body.query || "").toString().trim();
+  if (!query) return res.status(400).json({ error: "query erforderlich" });
+  if (query.length > 200) return res.status(400).json({ error: "Suchanfrage zu lang" });
+
+  db.run(
+    `DELETE FROM search_queries WHERE user_id = ? AND lower(query) = lower(?)`,
+    [userId, query],
+    (delErr) => {
+      if (delErr) {
+        console.error("Query-Dedupe-Fehler:", delErr);
+        return res.status(500).json({ error: "Speichern fehlgeschlagen" });
+      }
+      db.run(
+        `INSERT INTO search_queries (user_id, query) VALUES (?, ?)`,
+        [userId, query],
+        function (insErr) {
+          if (insErr) {
+            console.error("Query-Speicher-Fehler:", insErr);
+            return res.status(500).json({ error: "Speichern fehlgeschlagen" });
+          }
+          res.json({ success: true, id: this.lastID, query });
+        }
+      );
+    }
+  );
+});
+
+// Gesamten Anfragen-Verlauf leeren.
+app.delete("/api/search-queries", requireAuth, (req, res) => {
+  db.run(
+    `DELETE FROM search_queries WHERE user_id = ?`,
+    [req.session.user.id],
+    (err) => {
+      if (err) return res.status(500).json({ error: "Löschen fehlgeschlagen" });
+      res.json({ success: true });
+    }
+  );
+});
+
+// Einzelne Anfrage entfernen (per ID, gehört dem aktuellen User).
+app.delete("/api/search-queries/:id", requireAuth, (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!id) return res.status(400).json({ error: "Ungültige ID" });
+  db.run(
+    `DELETE FROM search_queries WHERE id = ? AND user_id = ?`,
+    [id, req.session.user.id],
+    (err) => {
+      if (err) {
+        console.error("Query-Eintrag löschen fehlgeschlagen:", err);
+        return res.status(500).json({ error: "Löschen fehlgeschlagen" });
+      }
+      res.json({ success: true });
+    }
+  );
 });
 
 // ===== KOMMENTAR-ENDPOINTS =====

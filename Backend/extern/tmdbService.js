@@ -125,6 +125,64 @@ async function searchMovies(query, limit = 8) {
     }));
 }
 
+// Hauptgenre eines Films ermitteln (das erste Genre, das TMDB zurückgibt –
+// laut TMDB-Konvention ist das das primäre/wichtigste Genre des Films).
+async function getMovieMainGenre(movieId, lang = "de-DE") {
+  try {
+    const response = await tmdb.get(`/movie/${movieId}`, { params: { language: lang } });
+    const genres = response.data?.genres || [];
+    return genres[0] || null; // { id, name }
+  } catch (err) {
+    return null;
+  }
+}
+
+// Discover-Aufruf, der Filme eines bestimmten Genres nach Popularität sortiert.
+// Wichtige Regel: das Ziel-Genre muss bei den Treffern PRIMÄR (Index 0) oder
+// SEKUNDÄR (Index 1) sein – sonst wird der Film verworfen. So vermeiden wir
+// Filme, die das Genre nur als Beigabe haben (z. B. ein Action-Drama, das nur
+// am Rand "Comedy" mitführt). TMDB sortiert genre_ids nach Wichtigkeit.
+async function discoverByGenre(genreId, lang = "de-DE", limit = 20) {
+  try {
+    const pages = 3; // ~60 Kandidaten, damit nach Strikt-Filter genug übrig bleibt
+    const candidates = [];
+    for (let page = 1; page <= pages; page++) {
+      const response = await tmdb.get("/discover/movie", {
+        params: {
+          with_genres: genreId,
+          sort_by: "popularity.desc",
+          language: lang,
+          include_adult: false,
+          page
+        }
+      });
+      const rows = response.data?.results || [];
+      if (!rows.length) break;
+      candidates.push(...rows);
+    }
+
+    const strict = candidates.filter(m => {
+      const ids = m.genre_ids || [];
+      // nur Filme, deren primäres oder sekundäres Genre exakt das Such-Genre ist
+      return ids[0] === genreId || ids[1] === genreId;
+    });
+
+    return strict
+      .filter(m => m.poster_path)
+      .slice(0, limit)
+      .map(m => ({
+        id: m.id,
+        title: m.title,
+        release_date: m.release_date,
+        poster_path: m.poster_path,
+        vote_average: m.vote_average,
+        genre_ids: m.genre_ids || []
+      }));
+  } catch (err) {
+    return [];
+  }
+}
+
 // Watch-Provider (Streaming-Anbieter) für einen Film holen.
 // TMDB liefert pro Land. Wir bevorzugen DE, Fallback AT/US.
 async function getWatchProviders(movieId) {
@@ -233,6 +291,8 @@ module.exports = {
   getWatchProviders,
   discoverMovies,
   enrichMovies,
+  getMovieMainGenre,
+  discoverByGenre,
   genreMapTMDB,
   genreNameById
 };

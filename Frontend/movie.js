@@ -22,12 +22,26 @@
       return res.json();
     })
     .then(details => {
+      const unknown = t("movie.unknown", "Unbekannt");
       document.title = `${details.title} | CineMatch`;
       document.getElementById("movieDetailTitle").textContent = details.title;
-      document.getElementById("movieDetailRating").textContent =
-        typeof details.vote_average === "number" ? details.vote_average.toFixed(1) : "–";
+
+      setRatingRing(details.vote_average);
+
+      const year = (details.release_date || "").slice(0, 4);
+      document.getElementById("movieDetailReleaseYear").textContent = year || unknown;
+      document.getElementById("movieDetailRuntimeShort").textContent =
+        formatRuntimeShort(details.runtime) || unknown;
+
       document.getElementById("movieDetailReleaseDate").textContent =
-        details.release_date_formatted || details.release_date || t("movie.unknown", "Unbekannt");
+        details.release_date_formatted || details.release_date || unknown;
+      document.getElementById("movieDetailRuntime").textContent =
+        details.runtime_formatted || (details.runtime ? `${details.runtime} min` : unknown);
+      document.getElementById("movieDetailGenre").textContent = details.genres || unknown;
+      document.getElementById("movieDetailDirector").textContent = details.director || unknown;
+
+      renderGenrePills(details.genres);
+
       document.getElementById("movieDetailOverview").textContent =
         details.overview || t("movie.noOverview", "Keine Beschreibung verfügbar.");
 
@@ -39,16 +53,12 @@
         posterEl.alt = t("result.noPoster", "Kein Poster verfügbar");
       }
 
+      setBackdrop(details.backdrop_path);
+      renderProviders(details.providers || []);
+
       loading.hidden = true;
       body.hidden = false;
       commentsBlock.hidden = false;
-
-      // Verlauf-Eintrag (nur falls eingeloggt)
-      saveToSearchHistory({
-        id: details.id,
-        title: details.title,
-        poster_path: details.poster_path
-      });
 
       loadComments(movieId);
     })
@@ -56,6 +66,84 @@
       console.error("Filmdetails laden fehlgeschlagen:", err);
       loading.textContent = t("movie.loadError", "Film konnte nicht geladen werden.");
     });
+
+  // ---------- Hero-Helpers ----------
+  function setBackdrop(path) {
+    const el = document.getElementById("movieBackdrop");
+    if (!el) return;
+    if (path) {
+      el.style.backgroundImage = `url('https://image.tmdb.org/t/p/w1280${path}')`;
+    } else {
+      el.style.backgroundImage = "none";
+      el.style.background = "linear-gradient(135deg, #1c1c22, #2a2a35)";
+    }
+  }
+
+  function setRatingRing(value) {
+    const arc = document.getElementById("movieRatingArc");
+    const text = document.getElementById("movieDetailRating");
+    const r = 17;
+    const circ = 2 * Math.PI * r;
+    if (arc) {
+      arc.setAttribute("stroke-dasharray", `${circ.toFixed(2)} ${circ.toFixed(2)}`);
+      arc.style.strokeDashoffset = String(circ.toFixed(2));
+      // Farbe nach Score-Klasse (rot/orange/grün)
+      const num = typeof value === "number" ? value : 0;
+      const color = num >= 7.5 ? "#3fd07a" : num >= 5.5 ? "#ffb33a" : "#ff5252";
+      arc.style.stroke = color;
+      // Im nächsten Frame animieren
+      requestAnimationFrame(() => {
+        const fraction = Math.max(0, Math.min(1, num / 10));
+        arc.style.strokeDashoffset = String((circ * (1 - fraction)).toFixed(2));
+      });
+    }
+    if (text) {
+      text.textContent = typeof value === "number" ? value.toFixed(1) : "–";
+    }
+  }
+
+  function renderGenrePills(genresStr) {
+    const container = document.getElementById("movieGenrePills");
+    if (!container) return;
+    const items = (genresStr || "")
+      .split(",")
+      .map(s => s.trim())
+      .filter(s => s && s.toLowerCase() !== "unbekannt");
+    if (!items.length) {
+      container.innerHTML = "";
+      return;
+    }
+    container.innerHTML = items
+      .map(g => `<span class="genre-pill">${escapeHtml(g)}</span>`)
+      .join("");
+  }
+
+  function formatRuntimeShort(minutes) {
+    if (!minutes || typeof minutes !== "number") return "";
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    if (h > 0 && m > 0) return `${h}h ${m}min`;
+    if (h > 0) return `${h}h`;
+    return `${m}min`;
+  }
+
+  // ---------- Provider-Liste rendern ----------
+  function renderProviders(providers) {
+    const block = document.getElementById("movieProvidersBlock");
+    const list = document.getElementById("movieProvidersList");
+    if (!providers.length) {
+      block.hidden = true;
+      list.innerHTML = "";
+      return;
+    }
+    list.innerHTML = providers.map(p => {
+      const logo = p.logo_path
+        ? `<img src="https://image.tmdb.org/t/p/w92${p.logo_path}" alt="">`
+        : "";
+      return `<div class="provider-chip">${logo}<span>${escapeHtml(p.name)}</span></div>`;
+    }).join("");
+    block.hidden = false;
+  }
 
   // ---------- Kommentare ----------
   function formatCommentDate(iso) {
