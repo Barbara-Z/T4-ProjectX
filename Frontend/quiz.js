@@ -7,11 +7,15 @@ let aktuelleFrage = 0;
 const gewählteAntworten = [];
 const t = (key, fb) => (window.I18n ? window.I18n.t(key, fb) : fb || key);
 
-fetch("/api/questions")
+fetch("http://localhost:3001/api/questions")
   .then(res => res.json())
   .then(data => {
     fragenArray = data;
     zeigeFrage();
+  })
+  .catch(err => {
+    console.error("Fehler beim Laden der Fragen:", err);
+    document.getElementById("frage").innerHTML = "Fehler beim Laden der Fragen. Backend nicht erreichbar?";
   });
 
 function lang() {
@@ -26,21 +30,66 @@ function answerText(answer) {
   return lang() === "en" && answer.text_en ? answer.text_en : answer.text;
 }
 
+function updateProgressBar() {
+  const progress = ((aktuelleFrage) / fragenArray.length) * 100;
+  const progressFill = document.getElementById("progressFill");
+  if (progressFill) {
+    progressFill.style.width = `${progress}%`;
+  }
+  
+  // Fortschrittstext aktualisieren
+  const fortschrittEl = document.getElementById("fortschritt");
+  if (fortschrittEl) {
+    fortschrittEl.textContent = `Frage ${aktuelleFrage + 1} von ${fragenArray.length}`;
+  }
+}
+
 function zeigeFrage() {
   if (!fragenArray.length) return;
   const frageObj = fragenArray[aktuelleFrage];
 
+  updateProgressBar();
+
   let html = `<div>${questionText(frageObj)}</div>`;
   frageObj.antworten.forEach((a, i) => {
     html += `
-      <div>
-        <input type="radio" name="antwort" value="${i}">
-        ${answerText(a)}
-      </div>
+      <label style="display: flex; align-items: center; gap: 12px; padding: 15px; border: 1px solid rgba(187, 13, 19, 0.3); background: rgba(255, 255, 255, 0.05); border-radius: 10px; cursor: pointer; transition: all 0.3s ease; margin-bottom: 10px;">
+        <input type="radio" name="antwort" value="${i}" style="width: 20px; height: 20px; cursor: pointer; accent-color: #bb0d13;">
+        <span>${answerText(a)}</span>
+      </label>
     `;
   });
 
   document.getElementById("frage").innerHTML = html;
+
+  // Weiter-Button zurücksetzen
+  const nextBtn = document.getElementById("nächsteFrage");
+  nextBtn.disabled = true;
+  nextBtn.style.opacity = "0.5";
+
+  // Event-Listener für Radio-Buttons
+  document.querySelectorAll('input[name="antwort"]').forEach(radio => {
+    radio.addEventListener("change", () => {
+      nextBtn.disabled = false;
+      nextBtn.style.opacity = "1";
+    });
+  });
+
+  // Hover-Effekte für Labels
+  document.querySelectorAll('label').forEach(label => {
+    label.addEventListener("mouseenter", () => {
+      label.style.background = "rgba(187, 13, 19, 0.2)";
+      label.style.borderColor = "#bb0d13";
+      label.style.transform = "translateY(-2px)";
+      label.style.boxShadow = "0 5px 15px rgba(187, 13, 19, 0.3)";
+    });
+    label.addEventListener("mouseleave", () => {
+      label.style.background = "rgba(255, 255, 255, 0.05)";
+      label.style.borderColor = "rgba(187, 13, 19, 0.3)";
+      label.style.transform = "translateY(0)";
+      label.style.boxShadow = "none";
+    });
+  });
 }
 
 // Sprachwechsel: aktuelle Frage in der neuen Sprache neu zeichnen,
@@ -86,7 +135,7 @@ document.getElementById("nächsteFrage").addEventListener("click", async () => {
   document.getElementById("frage").innerHTML = t("quiz.calculating");
 
   try {
-    const res = await fetch("/api/quiz-result", {
+    const res = await fetch("http://localhost:3001/api/quiz-result", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -96,7 +145,7 @@ document.getElementById("nächsteFrage").addEventListener("click", async () => {
     if (!res.ok || !data.success) throw new Error(data.error || t("quiz.error"));
 
     sessionStorage.setItem("quizResult", JSON.stringify(data));
-    window.location.href = "/Result.html";
+    window.location.href = "./Result.html";
   } catch (err) {
     document.getElementById("frage").innerHTML = `${t("quiz.error")}: ${err.message}`;
   }

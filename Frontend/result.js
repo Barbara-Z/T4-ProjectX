@@ -37,7 +37,7 @@ function renderEmptyState() {
     <div class="empty">
       ${t("result.noResult")}
       <br><br>
-      <a href="/Quiz.html" style="color:#e50914; font-weight:600;">${t("result.startQuiz")}</a>
+      <a href="./Quiz.html" style="color:#e50914; font-weight:600;">${t("result.startQuiz")}</a>
     </div>`;
 }
 
@@ -53,7 +53,7 @@ function renderResult() {
       <div class="empty">
         ${t("result.empty")}
         <br><br>
-        <a href="/Quiz.html" style="color:#e50914; font-weight:600;">${t("result.retake")} →</a>
+        <a href="./Quiz.html" style="color:#e50914; font-weight:600;">${t("result.retake")} →</a>
       </div>`;
     return;
   }
