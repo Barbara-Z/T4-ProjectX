@@ -14,7 +14,7 @@
 <body>
   <header class="result-header">
     <a href="/CineMatch.html" class="brand">
-      <img src="CineMatchLogo.png" alt="CineMatch" class="brand-logo">
+      <img src="CineMatchLogo_Schatten.png" alt="CineMatchLogo" class="CineMatchLogo">
       <span class="brand-name">CineMatch</span>
     </a>
     <div style="display:flex; align-items:center; gap:14px;">
@@ -22,7 +22,6 @@
       <a href="/Quiz.html" class="retake-btn" data-i18n="result.retake">Quiz wiederholen</a>
     </div>
   </header>
-
   <main class="result-main">
     <section class="result-hero">
       <p class="result-eyebrow" data-i18n="result.eyebrow">Dein Match-Ergebnis</p>
@@ -32,15 +31,28 @@
         <span id="prefs-summary" class="prefs-summary"></span>
       </p>
     </section>
-
     <section id="cards" class="cards" aria-live="polite">
       <div class="loading" data-i18n="result.loading">Empfehlungen werden geladen…</div>
     </section>
   </main>
-
-  <footer class="result-footer">
-    <span data-i18n="result.poweredBy">Empfehlungen powered by</span>
-    <img src="tmdbLogo.svg" alt="TMDB" class="tmdb-logo">
+  <footer id="footer">
+    <div class="footer-left">
+      <span class="footer-brand">CineMatch</span>
+      <span class="footer-copy">© 2026 – Schulprojekt</span>
+    </div>
+    <div class="footer-center">
+      <a href="#">Datenschutz</a>
+      <span class="footer-separator">|</span>
+      <a href="#">AGB</a>
+      <span class="footer-separator">|</span>
+      <a href="#">Impressum</a>
+    </div>
+    <div class="footer-right">
+      <span class="footer-tmdb">Powered by</span>
+      <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer">
+        <img src="tmdbLogo.svg" alt="tmdbLogo" class="tmdbLogo">
+      </a>
+    </div>
   </footer>
 </body>
 

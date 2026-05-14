@@ -1096,12 +1096,13 @@
     font-family: Poppins, sans-serif;
     color: white;
     font-weight: bold;
-    padding: 10px 50px;
+    padding: 10px 30px;
     font-size: 16px;
     cursor: pointer;
     border-radius: 8px;
     border: none;
     transition: all 0.3s ease;
+    min-width: 155px;
 }
 
 .quiz-btn:hover {
@@ -1293,11 +1294,13 @@
 }
 
 .auth-links a {
-    padding: 8px 16px;
+    padding: 6px 12px;
     border-radius: 5px;
     text-decoration: none;
     font-size: 14px;
     transition: all 0.3s ease;
+    min-width: 90px;
+    text-align: center;
 }
 
 .auth-links .login-link {
