@@ -42,7 +42,7 @@ console.log(
   process.env.TMDB_API_KEY?.startsWith("eyJ")
 );
 
-const { getPopularMovies, getTrendingMovies, getMovieDetails } = require("./extern/tmdbService");
+const { getPopularMovies, getTrendingMovies, getMovieDetails, searchMovies, getMovieMainGenre, discoverByGenre } = require("./extern/tmdbService");
 
 // SQLite Datenbank Initialisierung
 const db = new sqlite3.Database(path.join(__dirname, "users.db"), (err) => {
@@ -75,6 +75,44 @@ const db = new sqlite3.Database(path.join(__dirname, "users.db"), (err) => {
         }
       });
     });
+
+    // Suchverlauf (pro User). Wir speichern die TMDB-Movie-ID + Titel + Poster,
+    // damit Klicks im Verlauf ohne erneuten TMDB-Aufruf gerendert werden können.
+    db.run(`
+      CREATE TABLE IF NOT EXISTS search_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        movie_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        poster_path TEXT,
+        searched_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Suchanfragen-Historie: speichert die eingegebenen Suchbegriffe (Queries)
+    // pro User. Dadurch können wir im Dropdown vergangene Anfragen vorschlagen.
+    db.run(`
+      CREATE TABLE IF NOT EXISTS search_queries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        query TEXT NOT NULL,
+        searched_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Kommentare zu Filmen (pro User, pro Film, mehrere Einträge möglich)
+    db.run(`
+      CREATE TABLE IF NOT EXISTS comments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        movie_id INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
   }
 });
 
@@ -180,6 +218,302 @@ app.get("/api/movie-details/:movieId", async (req, res) => {
   }
 });
 // Ende Film-Details Endpoint
+
+// ===== SUCH-ENDPOINTS =====
+
+// Kombi-Endpoint für die Ergebnisseite: direkte Treffer + Hauptgenre des
+// Top-Treffers + ähnliche Filme aus diesem Hauptgenre.
+// GET /api/search-with-similar?q=Harry+Potter&lang=de
+app.get("/api/search-with-similar", async (req, res) => {
+  const query = (req.query.q || "").toString().trim();
+  const lang = (req.query.lang || "de").toString() === "en" ? "en-US" : "de-DE";
+  if (!query) return res.json({ query: "", results: [], similar: null });
+
+  try {
+    // 1. Direkte Treffer
+    const results = await searchMovies(query, 40);
+    if (!results.length) {
+      return res.json({ query, results: [], similar: null });
+    }
+
+    // 2. Hauptgenre des Top-Treffers ermitteln
+    const top = results[0];
+    const mainGenre = await getMovieMainGenre(top.id, lang); // { id, name } | null
+    if (!mainGenre) {
+      return res.json({ query, results, similar: null });
+    }
+
+    // 3. Ähnliche Filme aus diesem Hauptgenre (Discover, popularity.desc)
+    const similarRaw = await discoverByGenre(mainGenre.id, lang, 24);
+
+    // Direkte Treffer ausfiltern (damit der Film, den der User gesucht hat,
+    // nicht zweimal auftaucht).
+    const directIds = new Set(results.map(r => r.id));
+    const similar = similarRaw.filter(m => !directIds.has(m.id)).slice(0, 20);
+
+    res.json({
+      query,
+      results,
+      similar: {
+        genre_id: mainGenre.id,
+        genre_name: mainGenre.name,
+        movies: similar
+      }
+    });
+  } catch (err) {
+    console.error("search-with-similar fehlgeschlagen:", err.message);
+    res.status(500).json({ error: "Suche fehlgeschlagen" });
+  }
+});
+
+// Live-Autocomplete: liefert kompakte Treffer für die Dropdown-Vorschläge.
+// GET /api/search?q=har
+app.get("/api/search", async (req, res) => {
+  const query = (req.query.q || "").toString().trim();
+  if (!query) return res.json({ results: [] });
+  // limit kommt vom Frontend: Dropdown nutzt klein (8), Search-Page groß (z. B. 40)
+  const limitRaw = parseInt(req.query.limit, 10);
+  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 50) : 8;
+  try {
+    const results = await searchMovies(query, limit);
+    res.json({ query, results });
+  } catch (err) {
+    console.error("Suche fehlgeschlagen:", err.message);
+    res.status(500).json({ error: "Suche fehlgeschlagen" });
+  }
+});
+
+// Suchverlauf des aktuellen Users laden (nur wenn eingeloggt).
+// Letzte 10 Treffer, neueste zuerst, ohne Duplikate.
+app.get("/api/search-history", requireAuth, (req, res) => {
+  const userId = req.session.user.id;
+  db.all(
+    `SELECT movie_id, title, poster_path, MAX(searched_at) AS searched_at
+       FROM search_history
+      WHERE user_id = ?
+      GROUP BY movie_id
+      ORDER BY searched_at DESC
+      LIMIT 10`,
+    [userId],
+    (err, rows) => {
+      if (err) {
+        console.error("Suchverlauf-Fehler:", err);
+        return res.status(500).json({ error: "Verlauf konnte nicht geladen werden" });
+      }
+      res.json({ history: rows || [] });
+    }
+  );
+});
+
+// Eintrag in den Suchverlauf schreiben (z. B. wenn ein Vorschlag angeklickt wird).
+app.post("/api/search-history", requireAuth, (req, res) => {
+  const userId = req.session.user.id;
+  const movieId = parseInt(req.body.movie_id, 10);
+  const title = (req.body.title || "").toString().trim();
+  const posterPath = (req.body.poster_path || "").toString().trim() || null;
+
+  if (!movieId || !title) {
+    return res.status(400).json({ error: "movie_id und title erforderlich" });
+  }
+
+  db.run(
+    `INSERT INTO search_history (user_id, movie_id, title, poster_path) VALUES (?, ?, ?, ?)`,
+    [userId, movieId, title, posterPath],
+    function (err) {
+      if (err) {
+        console.error("Suchverlauf-Speicher-Fehler:", err);
+        return res.status(500).json({ error: "Speichern fehlgeschlagen" });
+      }
+      res.json({ success: true, id: this.lastID });
+    }
+  );
+});
+
+// Suchverlauf komplett leeren.
+app.delete("/api/search-history", requireAuth, (req, res) => {
+  db.run(`DELETE FROM search_history WHERE user_id = ?`, [req.session.user.id], (err) => {
+    if (err) return res.status(500).json({ error: "Löschen fehlgeschlagen" });
+    res.json({ success: true });
+  });
+});
+
+// Einzelnen Eintrag aus dem Suchverlauf entfernen (YouTube-Style Hover-Delete).
+// Wir entfernen alle Treffer mit derselben movie_id, da das GET-Endpoint
+// per GROUP BY movie_id ohnehin nur einen sichtbaren Eintrag pro Film liefert.
+app.delete("/api/search-history/:movieId", requireAuth, (req, res) => {
+  const movieId = parseInt(req.params.movieId, 10);
+  if (!movieId) return res.status(400).json({ error: "Ungültige Film-ID" });
+  db.run(
+    `DELETE FROM search_history WHERE user_id = ? AND movie_id = ?`,
+    [req.session.user.id, movieId],
+    (err) => {
+      if (err) {
+        console.error("Verlaufseintrag löschen fehlgeschlagen:", err);
+        return res.status(500).json({ error: "Löschen fehlgeschlagen" });
+      }
+      res.json({ success: true });
+    }
+  );
+});
+
+// ===== SUCHANFRAGEN-HISTORIE (textbasiert, pro User) =====
+
+// Letzte Anfragen abrufen (max. 10, neueste zuerst).
+app.get("/api/search-queries", requireAuth, (req, res) => {
+  db.all(
+    `SELECT id, query, searched_at
+       FROM search_queries
+      WHERE user_id = ?
+      ORDER BY searched_at DESC
+      LIMIT 10`,
+    [req.session.user.id],
+    (err, rows) => {
+      if (err) {
+        console.error("Query-Historie laden fehlgeschlagen:", err);
+        return res.status(500).json({ error: "Verlauf konnte nicht geladen werden" });
+      }
+      res.json({ queries: rows || [] });
+    }
+  );
+});
+
+// Neue Anfrage speichern. Vorhandene gleiche Anfrage (case-insensitive)
+// wird erst gelöscht, damit Wiederholungen an die Spitze rutschen.
+app.post("/api/search-queries", requireAuth, (req, res) => {
+  const userId = req.session.user.id;
+  const query = (req.body.query || "").toString().trim();
+  if (!query) return res.status(400).json({ error: "query erforderlich" });
+  if (query.length > 200) return res.status(400).json({ error: "Suchanfrage zu lang" });
+
+  db.run(
+    `DELETE FROM search_queries WHERE user_id = ? AND lower(query) = lower(?)`,
+    [userId, query],
+    (delErr) => {
+      if (delErr) {
+        console.error("Query-Dedupe-Fehler:", delErr);
+        return res.status(500).json({ error: "Speichern fehlgeschlagen" });
+      }
+      db.run(
+        `INSERT INTO search_queries (user_id, query) VALUES (?, ?)`,
+        [userId, query],
+        function (insErr) {
+          if (insErr) {
+            console.error("Query-Speicher-Fehler:", insErr);
+            return res.status(500).json({ error: "Speichern fehlgeschlagen" });
+          }
+          res.json({ success: true, id: this.lastID, query });
+        }
+      );
+    }
+  );
+});
+
+// Gesamten Anfragen-Verlauf leeren.
+app.delete("/api/search-queries", requireAuth, (req, res) => {
+  db.run(
+    `DELETE FROM search_queries WHERE user_id = ?`,
+    [req.session.user.id],
+    (err) => {
+      if (err) return res.status(500).json({ error: "Löschen fehlgeschlagen" });
+      res.json({ success: true });
+    }
+  );
+});
+
+// Einzelne Anfrage entfernen (per ID, gehört dem aktuellen User).
+app.delete("/api/search-queries/:id", requireAuth, (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!id) return res.status(400).json({ error: "Ungültige ID" });
+  db.run(
+    `DELETE FROM search_queries WHERE id = ? AND user_id = ?`,
+    [id, req.session.user.id],
+    (err) => {
+      if (err) {
+        console.error("Query-Eintrag löschen fehlgeschlagen:", err);
+        return res.status(500).json({ error: "Löschen fehlgeschlagen" });
+      }
+      res.json({ success: true });
+    }
+  );
+});
+
+// ===== KOMMENTAR-ENDPOINTS =====
+
+// Kommentare eines Films laden (öffentlich, auch für Gäste sichtbar).
+app.get("/api/comments/:movieId", (req, res) => {
+  const movieId = parseInt(req.params.movieId, 10);
+  if (!movieId) return res.status(400).json({ error: "Ungültige Film-ID" });
+
+  db.all(
+    `SELECT c.id, c.content, c.created_at,
+            u.firstName, u.lastName, u.profile_picture
+       FROM comments c
+       JOIN users u ON u.id = c.user_id
+      WHERE c.movie_id = ?
+      ORDER BY c.created_at DESC`,
+    [movieId],
+    (err, rows) => {
+      if (err) {
+        console.error("Kommentare-Fehler:", err);
+        return res.status(500).json({ error: "Kommentare konnten nicht geladen werden" });
+      }
+      const comments = (rows || []).map(r => ({
+        id: r.id,
+        content: r.content,
+        created_at: r.created_at,
+        author: `${r.firstName} ${r.lastName}`.trim(),
+        profile_picture: r.profile_picture || null
+      }));
+      res.json({ comments });
+    }
+  );
+});
+
+// Neuen Kommentar schreiben (nur eingeloggte User).
+app.post("/api/comments/:movieId", requireAuth, (req, res) => {
+  const movieId = parseInt(req.params.movieId, 10);
+  const content = (req.body.content || "").toString().trim();
+
+  if (!movieId) return res.status(400).json({ error: "Ungültige Film-ID" });
+  if (!content) return res.status(400).json({ error: "Kommentar darf nicht leer sein" });
+  if (content.length > 1000) return res.status(400).json({ error: "Kommentar zu lang (max. 1000 Zeichen)" });
+
+  const userId = req.session.user.id;
+  db.run(
+    `INSERT INTO comments (user_id, movie_id, content) VALUES (?, ?, ?)`,
+    [userId, movieId, content],
+    function (err) {
+      if (err) {
+        console.error("Kommentar-Speicher-Fehler:", err);
+        return res.status(500).json({ error: "Speichern fehlgeschlagen" });
+      }
+      // Frischen Kommentar inkl. Autor zurückgeben, damit das Frontend ihn ohne Reload anhängen kann
+      db.get(
+        `SELECT c.id, c.content, c.created_at,
+                u.firstName, u.lastName, u.profile_picture
+           FROM comments c
+           JOIN users u ON u.id = c.user_id
+          WHERE c.id = ?`,
+        [this.lastID],
+        (loadErr, row) => {
+          if (loadErr || !row) {
+            return res.json({ success: true });
+          }
+          res.json({
+            success: true,
+            comment: {
+              id: row.id,
+              content: row.content,
+              created_at: row.created_at,
+              author: `${row.firstName} ${row.lastName}`.trim(),
+              profile_picture: row.profile_picture || null
+            }
+          });
+        }
+      );
+    }
+  );
+});
 
 // REGISTRIERUNGS-ENDPOINT
 app.post("/register", async (req, res) => {

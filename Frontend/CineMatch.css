@@ -39,27 +39,1056 @@
     justify-content: center;
 }
 
-.search-input {
-    width: 450px;
-    padding: 12px 20px;
-    border-radius: 25px;
-    font-size: 14px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
-    transition: all 0.3s ease;
-    font-family: 'Poppins', sans-serif;
+/* YouTube-artige Suchleiste: Logo links, Input mittig, Lupen-Button rechts */
+.search-bar {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    width: 520px;
+    max-width: 100%;
+    background: #2a2a2a;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    /* overflow muss visible bleiben, sonst clippt der Container das
+       absolut positionierte Dropdown (top: 100% + 8px). Die einzelnen
+       Kind-Elemente runden ihre eigenen Ecken (siehe .search-bar-btn). */
+    overflow: visible;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.search-input:focus {
+.search-bar:focus-within {
+    border-color: rgba(187, 13, 19, 0.7);
+    box-shadow: 0 0 0 3px rgba(187, 13, 19, 0.18);
+}
+
+.search-bar-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    font-size: 18px;
+    color: #ddd;
+    background: transparent;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    user-select: none;
+}
+
+.search-bar-input {
+    flex: 1;
+    border: none;
     outline: none;
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(187, 13, 19, 0.5);
-    box-shadow: 0 0 20px rgba(187, 13, 19, 0.2);
+    background: transparent;
+    color: #fff;
+    font-size: 15px;
+    padding: 10px 14px;
+    min-width: 0;
 }
 
-.search-input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+.search-bar-input::placeholder {
+    color: #9a9a9a;
+}
+
+.search-bar-spinner {
+    align-self: center;
+    width: 14px;
+    height: 14px;
+    margin-right: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-top-color: #fff;
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+}
+
+.search-bar-spinner.active {
+    opacity: 1;
+    animation: search-spin 0.7s linear infinite;
+}
+
+@keyframes search-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.search-bar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    border: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    /* Rechte Ecke rund halten, da .search-bar jetzt overflow: visible nutzt */
+    border-radius: 0 999px 999px 0;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.search-bar-btn:hover {
+    background: linear-gradient(135deg, #bb0d13, #ff4444);
+    color: #fff;
+}
+
+.search-bar-btn:active {
+    transform: scale(0.97);
+}
+
+/* ===== Modernes Search-Dropdown ===== */
+.search-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    right: 0;
+    background: rgba(22, 22, 26, 0.96);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.55),
+        0 4px 12px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    /* Kein internes Scrolling mehr – Höhe folgt dem Inhalt */
+    overflow: hidden;
+    z-index: 1500;
+    padding: 6px;
+    animation: search-dropdown-in 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes search-dropdown-in {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.99);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.search-dropdown[hidden] {
+    display: none;
+}
+
+.search-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    color: #888;
+    font-weight: 700;
+    background: transparent;
+    border: none;
+}
+
+.search-clear-btn {
+    background: rgba(255, 107, 107, 0.08);
+    border: 1px solid rgba(255, 107, 107, 0.18);
+    color: #ff8b8b;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.search-clear-btn:hover {
+    background: rgba(255, 107, 107, 0.18);
+    border-color: rgba(255, 107, 107, 0.35);
+    color: #ffa3a3;
+    text-decoration: none;
+}
+
+.search-suggestion {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    cursor: pointer;
+    color: #f0f0f0;
+    position: relative;
+    border-radius: 10px;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.search-suggestion:hover,
+.search-suggestion.active {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.search-suggestion:active {
+    transform: scale(0.99);
+}
+
+.search-suggestion img {
+    width: 40px;
+    height: 58px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+    background: #2a2a2a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+/* History-Eintrag: Uhr-Icon statt Poster, kompakter */
+.search-suggestion-history {
+    padding: 7px 10px;
+}
+
+.search-suggestion-icon {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #b8b8b8;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.search-suggestion-history:hover .search-suggestion-icon,
+.search-suggestion-history.active .search-suggestion-icon {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.search-suggestion-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.search-suggestion-title {
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #f5f5f5;
+}
+
+.search-suggestion-movie .search-suggestion-title {
+    font-weight: 600;
+}
+
+.search-suggestion-meta {
+    font-size: 12px;
+    color: #9a9a9a;
+    margin-top: 3px;
+    letter-spacing: 0.2px;
+}
+
+.search-empty {
+    padding: 22px 14px;
+    text-align: center;
+    color: #888;
+    font-size: 13px;
+}
+
+/* Hover-Delete-Button im Suchverlauf */
+.search-suggestion-remove {
+    margin-left: auto;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: #9a9a9a;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.15s ease, transform 0.15s ease,
+        background 0.15s ease, color 0.15s ease;
+    padding: 0;
+}
+
+.search-suggestion-history:hover .search-suggestion-remove,
+.search-suggestion-history.active .search-suggestion-remove,
+.search-suggestion-remove:focus-visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.search-suggestion-remove:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+/* Watch Provider */
+.modal-providers {
+    padding-top: 15px;
+}
+
+.modal-providers h3 {
+    margin: 0 0 10px 0;
+    color: #bb0d13;
+    font-size: 18px;
+}
+
+.provider-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.provider-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #e0e0e0;
+}
+
+.provider-chip img {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    object-fit: contain;
+    background: #fff;
+}
+
+/* Kommentare */
+.modal-comments {
+    padding: 0 30px 30px 30px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 10px;
+}
+
+.modal-comments h3 {
+    color: #bb0d13;
+    font-size: 18px;
+    margin: 20px 0 12px 0;
+}
+
+.comment-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #fff;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.comment-form textarea:focus {
+    border-color: rgba(187, 13, 19, 0.7);
+}
+
+.comment-form textarea::placeholder {
+    color: #9a9a9a;
+}
+
+.comment-form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+
+.comment-counter {
+    font-size: 12px;
+    color: #9a9a9a;
+}
+
+.comment-submit {
+    background: linear-gradient(135deg, #bb0d13, #ff4444);
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.comment-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(187, 13, 19, 0.35);
+}
+
+.comment-submit:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.comment-list {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.comment-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+}
+
+.comment-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #bb0d13, #ff4444);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    overflow: hidden;
+}
+
+.comment-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.comment-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.comment-meta {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    margin-bottom: 4px;
+}
+
+.comment-author {
+    font-weight: 700;
+    color: #fff;
+    font-size: 14px;
+}
+
+.comment-date {
+    font-size: 12px;
+    color: #9a9a9a;
+}
+
+.comment-content {
+    color: #e2e2e2;
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.comment-empty {
+    color: #9a9a9a;
+    font-style: italic;
+    font-size: 14px;
+    padding: 8px 0;
+}
+
+/* Login Required Modal */
+.login-required-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.25s ease;
+}
+
+.login-required-modal.show {
+    display: flex;
+}
+
+.lr-content {
+    position: relative;
+    width: 90%;
+    max-width: 420px;
+    background: linear-gradient(160deg, #2a2a2a 0%, #1a1a1a 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    padding: 36px 28px 28px 28px;
+    text-align: center;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+    animation: lrPop 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.3);
+}
+
+@keyframes lrPop {
+    from {
+        transform: scale(0.85);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.lr-close {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 28px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.lr-close:hover {
+    color: #fff;
+}
+
+.lr-icon {
+    font-size: 52px;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 4px 10px rgba(187, 13, 19, 0.5));
+}
+
+.lr-content h2 {
+    color: #fff;
+    font-size: 22px;
+    margin: 6px 0 10px 0;
+}
+
+.lr-content p {
+    color: #c8c8c8;
+    font-size: 14px;
+    line-height: 1.55;
+    margin: 0 0 22px 0;
+}
+
+.lr-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.lr-btn {
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+    font-family: inherit;
+}
+
+.lr-btn-primary {
+    background: linear-gradient(135deg, #bb0d13, #ff4444);
+    color: #fff;
+}
+
+.lr-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(187, 13, 19, 0.4);
+}
+
+.lr-btn-ghost {
+    background: transparent;
+    color: #d6d6d6;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.lr-btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+}
+
+.lr-btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    text-align: center;
+}
+
+.lr-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.14);
+    transform: translateY(-2px);
+}
+
+/* ===== Search.html: Ergebnisseite ===== */
+.search-subline {
+    color: #b9b9b9;
+    margin: -8px 0 18px 0;
+    font-size: 14px;
+}
+
+/* Ähnliche-Filme-Sektion unter den direkten Treffern */
+.similar-section {
+    position: relative;
+    margin-top: 18px;
+    padding-top: 26px;
+}
+
+.similar-section::before {
+    content: "";
+    display: block;
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(229, 9, 20, 0.45) 20%,
+            rgba(229, 9, 20, 0.45) 80%,
+            transparent 100%);
+    margin-bottom: 22px;
+    box-shadow: 0 0 14px rgba(229, 9, 20, 0.35);
+}
+
+.similar-headline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.similar-headline::before {
+    content: "";
+    width: 5px;
+    height: 22px;
+    background: linear-gradient(180deg, #ff4444, #bb0d13);
+    border-radius: 2px;
+    box-shadow: 0 0 12px rgba(229, 9, 20, 0.55);
+}
+
+.search-page-empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: #c0c0c0;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+}
+
+/* ===== Movie.html: Detailseite (Hero + Sections) ===== */
+.movie-page {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 10px 0 40px 0;
+}
+
+.movie-page-loading {
+    text-align: center;
+    color: #c0c0c0;
+    padding: 60px 20px;
+    font-size: 16px;
+}
+
+.movie-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    animation: movie-fade-in 0.45s ease;
+}
+
+@keyframes movie-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ---- Hero ---- */
+.movie-hero {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #14141a;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.movie-hero-backdrop {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center 20%;
+    filter: blur(1px) brightness(0.5) saturate(110%);
+    transform: scale(1.06);
+    z-index: 0;
+}
+
+.movie-hero-fade {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(180deg, rgba(15, 15, 20, 0.45) 0%, rgba(15, 15, 20, 0.92) 100%),
+        linear-gradient(90deg, rgba(15, 15, 20, 0.85) 0%, rgba(15, 15, 20, 0.3) 60%, rgba(15, 15, 20, 0) 100%);
+    z-index: 1;
+}
+
+.movie-hero-glow {
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    right: -100px;
+    top: -120px;
+    background: radial-gradient(circle, rgba(229, 9, 20, 0.28), rgba(229, 9, 20, 0) 70%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.movie-hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    gap: 34px;
+    padding: 38px;
+    align-items: flex-end;
+    min-height: 360px;
+}
+
+.movie-hero-poster {
+    flex-shrink: 0;
+}
+
+.movie-hero-poster img {
+    width: 230px;
+    height: auto;
+    display: block;
+    border-radius: 14px;
+    background: #1e1e1e;
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.movie-hero-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.movie-hero-title {
+    margin: 0;
+    font-size: 40px;
+    line-height: 1.08;
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Genre-Pills im Hero */
+.movie-genre-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.genre-pill {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #f4f4f4;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+
+.genre-pill:hover {
+    background: rgba(229, 9, 20, 0.22);
+    border-color: rgba(229, 9, 20, 0.45);
+    transform: translateY(-1px);
+}
+
+/* Rating-Ring + Meta-Line */
+.movie-keymeta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 6px;
+}
+
+.movie-rating-ring {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+    background: rgba(15, 15, 20, 0.75);
+    border-radius: 50%;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+.rating-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.rating-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.12);
+    stroke-width: 3.2;
+}
+
+.rating-fg {
+    fill: none;
+    stroke: #3fd07a;
+    stroke-width: 3.2;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.rating-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 16px;
+}
+
+.movie-keymeta-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.meta-eyebrow {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    color: #9b9b9b;
+    font-weight: 700;
+}
+
+.meta-line {
+    color: #f0f0f0;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.movie-meta-dot {
+    color: #555;
+    margin: 0 8px;
+}
+
+/* ---- Info-Karten ---- */
+.movie-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.movie-info-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    padding: 14px 16px;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.movie-info-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(229, 9, 20, 0.28);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+}
+
+.movie-info-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(229, 9, 20, 0.22), rgba(187, 13, 19, 0.12));
+    color: #ff7a83;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 0 1px rgba(229, 9, 20, 0.2);
+}
+
+.movie-info-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.movie-info-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.movie-info-label {
+    font-size: 11px;
+    color: #9a9a9a;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin-bottom: 3px;
+    font-weight: 700;
+}
+
+.movie-info-value {
+    font-size: 14px;
+    color: #f0f0f0;
+    font-weight: 600;
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---- Sections (Beschreibung, Provider, Kommentare) ---- */
+.movie-section {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 20px 22px;
+}
+
+.movie-section-title {
+    color: #fff;
+    font-size: 17px;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.movie-section-title::before {
+    content: "";
+    width: 4px;
+    height: 18px;
+    background: linear-gradient(180deg, #ff4444, #bb0d13);
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
+}
+
+.movie-overview-text {
+    margin: 0;
+    color: #dadada;
+    line-height: 1.7;
+    font-size: 15px;
+}
+
+/* ---- Provider auf der Movie-Page (übersteuert .modal-providers nicht – wir
+        nutzen den .movie-section-Container mit eigenem Titel). ---- */
+.movie-providers-block .provider-list {
+    margin-top: 2px;
+}
+
+.movie-providers-block .provider-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.10);
+    padding: 7px 12px;
+    border-radius: 999px;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.movie-providers-block .provider-chip:hover {
+    background: rgba(229, 9, 20, 0.14);
+    border-color: rgba(229, 9, 20, 0.35);
+    transform: translateY(-1px);
+}
+
+/* ---- Kommentare im neuen Container-Look ---- */
+.movie-comments-section {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 20px 22px 24px;
+    margin-top: 6px;
+    animation: movie-fade-in 0.5s ease;
+}
+
+.movie-comments-section .comment-list {
+    margin-top: 18px;
+}
+
+/* Responsive */
+@media (max-width: 760px) {
+    .movie-hero-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 26px 22px;
+        gap: 18px;
+        min-height: auto;
+    }
+
+    .movie-hero-poster img {
+        width: 180px;
+    }
+
+    .movie-hero-title {
+        font-size: 26px;
+    }
+
+    .movie-genre-pills,
+    .movie-keymeta {
+        justify-content: center;
+    }
+
+    .movie-info-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .movie-section,
+    .movie-comments-section {
+        padding: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .movie-info-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .quiz-btn {
