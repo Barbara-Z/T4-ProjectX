@@ -27,3 +27,4 @@ logs/
 # Session files
 Backend/sessions/
 "Backend/users.db" 
+"Backend/users.db" 
