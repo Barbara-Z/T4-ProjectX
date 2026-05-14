@@ -37,7 +37,7 @@ function renderEmptyState() {
     <div class="empty">
       ${t("result.noResult")}
       <br><br>
-      <a href="/Quiz.html" style="color:#e50914; font-weight:600;">${t("result.startQuiz")}</a>
+      <a href="./Quiz.html" style="color:#e50914; font-weight:600;">${t("result.startQuiz")}</a>
     </div>`;
 }
 
@@ -53,7 +53,7 @@ function renderResult() {
       <div class="empty">
         ${t("result.empty")}
         <br><br>
-        <a href="/Quiz.html" style="color:#e50914; font-weight:600;">${t("result.retake")} →</a>
+        <a href="./Quiz.html" style="color:#e50914; font-weight:600;">${t("result.retake")} →</a>
       </div>`;
     return;
   }
@@ -61,8 +61,12 @@ function renderResult() {
 }
 
 function renderCard(movie, index) {
+  const currentLang = localStorage.getItem("cinematch.lang") || "de";
+  const title = currentLang === "en" ? (movie.title_en || movie.title) : movie.title;
+  const overview = currentLang === "en" ? (movie.overview_en || movie.overview) : movie.overview;
+  
   const poster = movie.poster_path
-    ? `<img class="card-poster" src="${POSTER_BASE}${movie.poster_path}" alt="${escapeHtml(movie.title)} Poster" loading="lazy">`
+    ? `<img class="card-poster" src="${POSTER_BASE}${movie.poster_path}" alt="${escapeHtml(title)} Poster" loading="lazy">`
     : `<div class="card-poster placeholder">${t("result.noPoster")}</div>`;
 
   const year = movie.release_date ? new Date(movie.release_date).getFullYear() : null;
@@ -80,9 +84,9 @@ function renderCard(movie, index) {
       <span class="card-score">${t("result.match")} ${movie.score?.toFixed?.(2) ?? movie.score}</span>
       ${poster}
       <div class="card-body">
-        <h2 class="card-title">${escapeHtml(movie.title || t("result.noTitle"))}</h2>
+        <h2 class="card-title">${escapeHtml(title || t("result.noTitle"))}</h2>
         <p class="card-meta">${meta}</p>
-        <p class="card-overview">${escapeHtml(movie.overview || t("result.noOverview"))}</p>
+        <p class="card-overview">${escapeHtml(overview || t("result.noOverview"))}</p>
         <div class="card-genres">${genres}</div>
       </div>
     </article>
