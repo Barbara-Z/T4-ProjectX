@@ -113,7 +113,48 @@ const translations = {
     "msg.fileReadError": "Datei konnte nicht gelesen werden",
 
     // Generisch
-    "generic.user": "Benutzer"
+    "generic.user": "Benutzer",
+
+    // Suche
+    "search.history": "Suchverlauf",
+    "search.previousSearch": "Zuletzt gesucht",
+    "search.clear": "Verlauf löschen",
+    "search.noResults": "Keine Ergebnisse gefunden",
+
+    // Modal-Erweiterung
+    "modal.providers": "Verfügbar bei",
+
+    // Kommentare
+    "comments.title": "Kommentare",
+    "comments.placeholder": "Was hältst du von diesem Film?",
+    "comments.submit": "Kommentar posten",
+    "comments.empty": "Noch keine Kommentare. Sei der Erste!",
+    "comments.loading": "Kommentare werden geladen...",
+    "comments.error": "Kommentare konnten nicht geladen werden.",
+
+    // Login-Required-Modal
+    "loginRequired.title": "Login erforderlich",
+    "loginRequired.text": "Du musst eingeloggt sein, um Kommentare zu schreiben.",
+    "loginRequired.loginBtn": "Anmelden",
+    "loginRequired.registerBtn": "Registrieren",
+
+    // Search-Page
+    "search.resultsTitle": "Suchergebnisse",
+    "search.resultsFor": "Suchergebnisse für ‘{q}’",
+    "search.subline": "Klicke einen Film an, um Details zu sehen.",
+    "search.noQuery": "Bitte einen Suchbegriff eingeben.",
+    "search.noResultsFor": "Keine Filme gefunden.",
+    "search.error": "Suche fehlgeschlagen. Bitte später erneut versuchen.",
+    "search.removeEntry": "Aus Verlauf entfernen",
+    "search.similarGenre": "Ähnliche {genre}-Filme",
+
+    // Movie-Page
+    "movie.loading": "Film wird geladen...",
+    "movie.invalidId": "Ungültige Film-ID.",
+    "movie.unknown": "Unbekannt",
+    "movie.noOverview": "Keine Beschreibung verfügbar.",
+    "movie.loadError": "Film konnte nicht geladen werden.",
+    "movie.userScore": "Zuschauer-Score"
   },
 
   en: {
@@ -216,12 +257,76 @@ const translations = {
     "msg.profileLoadError": "Could not load profile",
     "msg.fileReadError": "File could not be read",
 
-    "generic.user": "User"
+    "generic.user": "User",
+
+    "search.history": "Search history",
+    "search.previousSearch": "Recently searched",
+    "search.clear": "Clear history",
+    "search.noResults": "No results found",
+
+    "modal.providers": "Available on",
+
+    "comments.title": "Comments",
+    "comments.placeholder": "What did you think of this movie?",
+    "comments.submit": "Post comment",
+    "comments.empty": "No comments yet. Be the first!",
+    "comments.loading": "Loading comments...",
+    "comments.error": "Comments could not be loaded.",
+
+    "loginRequired.title": "Login required",
+    "loginRequired.text": "You must be logged in to write comments.",
+    "loginRequired.loginBtn": "Sign in",
+    "loginRequired.registerBtn": "Sign up",
+
+    "search.resultsTitle": "Search results",
+    "search.resultsFor": "Search results for ‘{q}’",
+    "search.subline": "Click a movie to see its details.",
+    "search.noQuery": "Please enter a search term.",
+    "search.noResultsFor": "No movies found.",
+    "search.error": "Search failed. Please try again later.",
+    "search.removeEntry": "Remove from history",
+    "search.similarGenre": "Similar {genre} Movies",
+
+    "movie.loading": "Loading movie...",
+    "movie.invalidId": "Invalid movie ID.",
+    "movie.unknown": "Unknown",
+    "movie.noOverview": "No description available.",
+    "movie.loadError": "Could not load movie.",
+    "movie.userScore": "User Score"
+  }
+};
+
+// TMDB-Genre-Namen (Film-Genres) pro Sprache. Wird für die „Ähnliche
+// {Genre}-Filme"-Überschrift gebraucht, damit sie sofort umschalten kann,
+// ohne dass das Backend erneut nach dem Genre-Namen gefragt werden muss.
+const tmdbGenreNames = {
+  de: {
+    28: "Action", 12: "Abenteuer", 16: "Animation", 35: "Komödie",
+    80: "Krimi", 99: "Dokumentarfilm", 18: "Drama", 10751: "Familie",
+    14: "Fantasy", 36: "Historie", 27: "Horror", 10402: "Musik",
+    9648: "Mystery", 10749: "Liebesfilm", 878: "Science Fiction",
+    10770: "TV-Film", 53: "Thriller", 10752: "Kriegsfilm", 37: "Western"
+  },
+  en: {
+    28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy",
+    80: "Crime", 99: "Documentary", 18: "Drama", 10751: "Family",
+    14: "Fantasy", 36: "History", 27: "Horror", 10402: "Music",
+    9648: "Mystery", 10749: "Romance", 878: "Science Fiction",
+    10770: "TV Movie", 53: "Thriller", 10752: "War", 37: "Western"
   }
 };
 
 const I18n = {
   current: localStorage.getItem("cinematch.lang") || "de",
+
+  // Liefert den Namen eines TMDB-Genres in der aktuellen Sprache.
+  // Fällt auf Englisch zurück, falls die ID nicht gemappt ist.
+  genreName(id) {
+    const lang = this.current;
+    return (tmdbGenreNames[lang] && tmdbGenreNames[lang][id])
+        || tmdbGenreNames.en[id]
+        || "";
+  },
 
   set(lang) {
     if (!translations[lang]) return;
