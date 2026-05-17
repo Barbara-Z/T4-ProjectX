@@ -90,6 +90,11 @@ function zeigeFrage() {
       label.style.boxShadow = "none";
     });
   });
+
+  const backBtn = document.getElementById("vorherigerFrage");
+  if (backBtn) {
+    backBtn.style.display = aktuelleFrage === 0 ? "none" : "block";
+  }
 }
 
 // Sprachwechsel: aktuelle Frage in der neuen Sprache neu zeichnen,
@@ -103,6 +108,13 @@ document.addEventListener("languagechange", () => {
       if (restored) restored.checked = true;
     }
   }
+});
+
+document.getElementById("vorherigerFrage").addEventListener("click", () => {
+  if (aktuelleFrage <= 0) return;
+  aktuelleFrage--;
+  gewählteAntworten.pop();
+  zeigeFrage();
 });
 
 document.getElementById("nächsteFrage").addEventListener("click", async () => {

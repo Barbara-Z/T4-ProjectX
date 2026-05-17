@@ -24,7 +24,7 @@ async function getPopularMovies() {
 // Trend-Filme der letzten Woche von TMDB abrufen
 async function getTrendingMovies(language = 'de-DE') {
   const response = await tmdb.get("/trending/movie/week", {
-    params: { language }
+  params: { language }
   }); // API-Aufruf zu TMDB
   return response.data; // Rückgabe der Filmdaten (Array mit Filmen)
 }
@@ -57,6 +57,7 @@ const genreNameById = Object.fromEntries(
 );
 
 // Genre-Übersetzungen: Deutsch -> Englisch für TMDB-Genre-Namen
+
 const genreTranslationsDeToEn = {
   Action: 'Action',
   Abenteuer: 'Adventure',
@@ -135,6 +136,121 @@ async function enrichMovies(movies) {
   return Promise.all(movies.map(enrichMovieForRanking));
 }
 
+// Live-Suche: Filme nach Stichwort suchen (mit deutscher Sprache)
+// Wird vom Autocomplete-Endpoint im Backend genutzt.
+async function searchMovies(query, limit = 8) {
+  if (!query || !query.trim()) return [];
+  const response = await tmdb.get("/search/movie", {
+    params: {
+      query: query.trim(),
+      language: "de-DE",
+      include_adult: false,
+      page: 1
+    }
+  });
+  const results = (response.data && response.data.results) || [];
+  // Beliebteste Treffer mit Poster zuerst, dann auf limit kürzen
+  return results
+    .filter(m => m.poster_path)
+    .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+    .slice(0, limit)
+    .map(m => ({
+      id: m.id,
+      title: m.title,
+      release_date: m.release_date,
+      poster_path: m.poster_path,
+      vote_average: m.vote_average
+    }));
+}
+
+// Hauptgenre eines Films ermitteln (das erste Genre, das TMDB zurückgibt –
+// laut TMDB-Konvention ist das das primäre/wichtigste Genre des Films).
+async function getMovieMainGenre(movieId, lang = "de-DE") {
+  try {
+    const response = await tmdb.get(`/movie/${movieId}`, { params: { language: lang } });
+    const genres = response.data?.genres || [];
+    return genres[0] || null; // { id, name }
+  } catch (err) {
+    return null;
+  }
+}
+
+// Discover-Aufruf, der Filme eines bestimmten Genres nach Popularität sortiert.
+// Wichtige Regel: das Ziel-Genre muss bei den Treffern PRIMÄR (Index 0) oder
+// SEKUNDÄR (Index 1) sein – sonst wird der Film verworfen. So vermeiden wir
+// Filme, die das Genre nur als Beigabe haben (z. B. ein Action-Drama, das nur
+// am Rand "Comedy" mitführt). TMDB sortiert genre_ids nach Wichtigkeit.
+async function discoverByGenre(genreId, lang = "de-DE", limit = 20) {
+  try {
+    const pages = 3; // ~60 Kandidaten, damit nach Strikt-Filter genug übrig bleibt
+    const candidates = [];
+    for (let page = 1; page <= pages; page++) {
+      const response = await tmdb.get("/discover/movie", {
+        params: {
+          with_genres: genreId,
+          sort_by: "popularity.desc",
+          language: lang,
+          include_adult: false,
+          page
+        }
+      });
+      const rows = response.data?.results || [];
+      if (!rows.length) break;
+      candidates.push(...rows);
+    }
+
+    const strict = candidates.filter(m => {
+      const ids = m.genre_ids || [];
+      // nur Filme, deren primäres oder sekundäres Genre exakt das Such-Genre ist
+      return ids[0] === genreId || ids[1] === genreId;
+    });
+
+    return strict
+      .filter(m => m.poster_path)
+      .slice(0, limit)
+      .map(m => ({
+        id: m.id,
+        title: m.title,
+        release_date: m.release_date,
+        poster_path: m.poster_path,
+        vote_average: m.vote_average,
+        genre_ids: m.genre_ids || []
+      }));
+  } catch (err) {
+    return [];
+  }
+}
+
+// Watch-Provider (Streaming-Anbieter) für einen Film holen.
+// TMDB liefert pro Land. Wir bevorzugen DE, Fallback AT/US.
+async function getWatchProviders(movieId) {
+  try {
+    const response = await tmdb.get(`/movie/${movieId}/watch/providers`);
+    const results = response.data?.results || {};
+    const region = results.DE || results.AT || results.US || null;
+    if (!region) return [];
+    // flatrate = Streaming-Abos, ads = werbefinanziert, buy/rent = kaufen/leihen
+    const buckets = ["flatrate", "ads", "free", "buy", "rent"];
+    const seen = new Set();
+    const providers = [];
+    for (const bucket of buckets) {
+      for (const p of region[bucket] || []) {
+        if (seen.has(p.provider_id)) continue;
+        seen.add(p.provider_id);
+        providers.push({
+          id: p.provider_id,
+          name: p.provider_name,
+          logo_path: p.logo_path,
+          type: bucket
+        });
+      }
+    }
+    return providers;
+  } catch (err) {
+    return [];
+  }
+}
+
 // Film-Details abrufen (mit deutscher Übersetzung, Credits, Runtime, etc.)
 async function getMovieDetails(movieId) {
   try {
@@ -145,6 +261,9 @@ async function getMovieDetails(movieId) {
     // Credits (Director, Writer) abrufen
     const creditsResponse = await tmdb.get(`/movie/${movieId}/credits`);
     const credits = creditsResponse.data;
+
+    // Streaming-Anbieter parallel abrufen (Fehler werden in getWatchProviders abgefangen)
+    const providers = await getWatchProviders(movieId);
 
     // Englische Details auch abrufen, damit wir bei EN Sprache Genre-Namen und Overview korrekt anzeigen können
     const engResponse = await tmdb.get(`/movie/${movieId}?language=en-US`);
@@ -194,7 +313,8 @@ async function getMovieDetails(movieId) {
       genres: genres,
       genres_en: genresEn,
       director_object: credits.crew?.find(member => member.job === 'Director'),
-      writers_objects: credits.crew?.filter(member => member.job === 'Writer' || member.job === 'Screenplay') || []
+      writers_objects: credits.crew?.filter(member => member.job === 'Writer' || member.job === 'Screenplay') || [],
+      providers
     };
   } catch (error) {
     console.error('Fehler beim Abrufen der Film-Details:', error);
@@ -208,8 +328,12 @@ module.exports = {
   getTrendingMovies,
   getMoviesByGenres,
   getMovieDetails,
+  searchMovies,
+  getWatchProviders,
   discoverMovies,
   enrichMovies,
+  getMovieMainGenre,
+  discoverByGenre,
   genreMapTMDB,
   genreNameById
 };

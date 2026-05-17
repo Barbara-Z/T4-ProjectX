@@ -79,7 +79,8 @@ function renderCard(movie, index) {
     .join("");
 
   return `
-    <article class="card">
+
+     <article class="card" onclick="window.location.href='./Movie.html?id=${movie.id}'" style="cursor:pointer;">
       <span class="card-rank">#${index + 1}</span>
       <span class="card-score">${t("result.match")} ${movie.score?.toFixed?.(2) ?? movie.score}</span>
       ${poster}
